@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaCheck, FaPlay, FaClock, FaExclamationTriangle, FaFilter, FaFile, FaFileAlt, FaLink, FaDownload, FaEye, FaVideo, FaStickyNote } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import useTaskStore from '../stores/useTaskStore';
 import useDocumentStore from '../stores/useDocumentStore';
 import useVideoStore from '../stores/useVideoStore';
@@ -12,6 +12,7 @@ import { Note } from '../services/noteService';
 import { Video } from '../services/videoService';
 
 const Tasks = () => {
+  const navigate = useNavigate();
   const { token } = useAuthStore();
   const { tasks, isLoading, error, fetchAllTasks, addTask, updateTask, deleteTask } = useTaskStore();
   const { documents, fetchAllDocuments } = useDocumentStore();
@@ -255,6 +256,11 @@ const Tasks = () => {
     documentService.openDocumentInNewTab(token, doc.id, doc.name);
   };
   
+  const startTaskSession = (taskId: number | undefined) => {
+    if (!taskId) return;
+    navigate(`/task-session/${taskId}`);
+  };
+  
   if (isLoading && tasks.length === 0) {
     return (
       <div className="page-container">
@@ -349,6 +355,13 @@ const Tasks = () => {
                     {getPriorityLabel(task.priority)}
                   </div>
                   <div className="task-actions">
+                    <button
+                      className="icon-button play"
+                      onClick={() => startTaskSession(task.id)}
+                      title="Start Session"
+                    >
+                      <FaPlay />
+                    </button>
                     <button
                       className="icon-button info"
                       onClick={() => toggleExpandTask(task.id)}
@@ -508,6 +521,13 @@ const Tasks = () => {
                         )}
                       </div>
                     )}
+                    
+                    <button 
+                      className="start-session-btn"
+                      onClick={() => startTaskSession(task.id)}
+                    >
+                      <FaPlay /> Start Study Session
+                    </button>
                   </div>
                 )}
                 
@@ -516,6 +536,13 @@ const Tasks = () => {
                   {task.createdAt && (
                     <span>Created: {formatDate(task.createdAt)}</span>
                   )}
+                  <button 
+                    className="icon-button small play"
+                    onClick={() => startTaskSession(task.id)}
+                    title="Start Session"
+                  >
+                    <FaPlay /> Start Session
+                  </button>
                 </div>
               </li>
             ))}

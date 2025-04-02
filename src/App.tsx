@@ -12,6 +12,7 @@ import Videos from './pages/Videos'
 import Chatbot from './pages/Chatbot'
 import NoteView from './pages/NoteView'
 import Session from './pages/Session'
+import TaskSession from './pages/TaskSession'
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -25,6 +26,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Session />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/task-session/:taskId"
+          element={
+            <ProtectedRoute>
+              <TaskSession />
             </ProtectedRoute>
           }
         />
