@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Rnd } from 'react-rnd';
 import { FaPlay, FaPause, FaStopwatch, FaExpand, FaCompress, FaEye, FaEyeSlash, FaTimes, FaCog, FaChevronLeft } from 'react-icons/fa';
 import useModuleStore, { Module, DocFile, Video, Note } from '../stores/useModuleStore';
+import useAuthStore from '../stores/useAuthStore';
+import { documentService } from '../services/documentService';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
@@ -24,6 +26,7 @@ const Session = () => {
   const { moduleId } = useParams<{ moduleId: string }>();
   const navigate = useNavigate();
   const { modules, documents, videos, notes, addNote, updateNote } = useModuleStore();
+  const { token } = useAuthStore();
   
   // États pour le module et ses ressources
   const [module, setModule] = useState<Module | null>(null);
@@ -77,6 +80,9 @@ const Session = () => {
   // État pour le document actuel
   const [currentDocumentUrl, setCurrentDocumentUrl] = useState<string | null>(null);
   
+  // Add state for document blob URL
+  const [documentBlobUrl, setDocumentBlobUrl] = useState<string | null>(null);
+  
   // Fonction pour formater l'URL YouTube
   const formatYouTubeUrl = (url: string) => {
     // Gérer différents formats d'URL YouTube
@@ -88,6 +94,53 @@ const Session = () => {
   // Référence pour l'intervalle du minuteur
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
 
+  // Function to load a document with proper authentication
+  const loadDocument = async (docUrl: string | undefined) => {
+    if (!docUrl || !token) return;
+    
+    if (docUrl.includes('/api/documents/')) {
+      const docId = docUrl.split('/').pop() || '';
+      try {
+        // Clean up previous blob URL if it exists
+        if (documentBlobUrl) {
+          URL.revokeObjectURL(documentBlobUrl);
+        }
+        
+        const blob = await documentService.downloadDocument(token, docId);
+        const newBlobUrl = URL.createObjectURL(blob);
+        setDocumentBlobUrl(newBlobUrl);
+        setCurrentDocumentUrl(null); // Clear the original URL since we're using blob now
+      } catch (error) {
+        console.error('Error loading document:', error);
+      }
+    } else {
+      // For external URLs, just set the URL directly
+      setCurrentDocumentUrl(docUrl);
+      
+      // Clean up previous blob URL if it exists
+      if (documentBlobUrl) {
+        URL.revokeObjectURL(documentBlobUrl);
+        setDocumentBlobUrl(null);
+      }
+    }
+  };
+  
+  // Update the document selection logic
+  const selectDocument = (doc: DocFile) => {
+    if (doc.url) {
+      loadDocument(doc.url);
+    }
+  };
+  
+  // Clean up blob URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      if (documentBlobUrl) {
+        URL.revokeObjectURL(documentBlobUrl);
+      }
+    };
+  }, [documentBlobUrl]);
+  
   // Charger les données du module au chargement
   useEffect(() => {
     if (!moduleId) return;
@@ -110,11 +163,11 @@ const Session = () => {
       setCurrentVideoIndex(0);
     }
     
-    // Initialiser le premier document si disponible
+    // Initialize the first document if available
     if (documents.filter(doc => doc.moduleId === moduleId).length > 0) {
       const firstDoc = documents.filter(doc => doc.moduleId === moduleId)[0];
       if (firstDoc.url) {
-        setCurrentDocumentUrl(firstDoc.url);
+        loadDocument(firstDoc.url);
       }
     }
     
@@ -142,7 +195,7 @@ const Session = () => {
         clearInterval(timerInterval.current);
       }
     };
-  }, [moduleId, modules, documents, videos, notes, navigate, addNote]);
+  }, [moduleId, modules, documents, videos, notes, navigate, addNote, token]);
   
   // Logique du minuteur
   useEffect(() => {
@@ -443,8 +496,8 @@ const Session = () => {
                   moduleDocuments.map(doc => (
                     <div 
                       key={doc.id} 
-                      className={`document-item ${doc.url === currentDocumentUrl ? 'active' : ''}`}
-                      onClick={() => setCurrentDocumentUrl(doc.url || null)}
+                      className={`document-item ${doc.url && (doc.url === currentDocumentUrl || documentBlobUrl !== null) ? 'active' : ''}`}
+                      onClick={() => selectDocument(doc)}
                     >
                       <div className="document-icon">{/* Icône selon le type */}</div>
                       <div className="document-name">{doc.name}</div>
@@ -454,9 +507,9 @@ const Session = () => {
               </div>
               
               <div className="document-preview">
-                {currentDocumentUrl ? (
+                {(currentDocumentUrl || documentBlobUrl) ? (
                   <iframe 
-                    src={currentDocumentUrl} 
+                    src={documentBlobUrl || currentDocumentUrl || ''} 
                     title="Document Preview" 
                     className="document-iframe"
                   />

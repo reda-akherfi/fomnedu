@@ -6,7 +6,7 @@ export interface Document {
   contentType: string;
   size: number;
   uploadDate: string;
-  downloadUrl: string;
+  downloadUrl?: string;
   userId: string;
   taskIds: number[];
   description?: string;
@@ -83,7 +83,37 @@ export const documentService = {
     }
   },
   
-  getDownloadUrl(id: string): string {
-    return `${API_URL}/${id}`;
+  async downloadDocument(token: string, id: string): Promise<Blob> {
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to download document');
+    }
+    
+    return response.blob();
+  },
+  
+  openDocumentInNewTab(token: string, id: string, filename: string): void {
+    // Create an authenticated blob URL
+    this.downloadDocument(token, id)
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      })
+      .catch(error => {
+        console.error('Error opening document:', error);
+      });
+  },
+  
+  createObjectURL(token: string, id: string, filename: string): Promise<string> {
+    return this.downloadDocument(token, id)
+      .then(blob => {
+        return URL.createObjectURL(blob);
+      });
   }
 }; 

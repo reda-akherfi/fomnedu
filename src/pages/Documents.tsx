@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
-import { FaPlus, FaFile, FaFileAlt, FaFilePdf, FaFileImage, FaFileVideo, FaFileAudio, FaFileArchive, FaFileExcel, FaFilePowerpoint, FaFileWord, FaDownload, FaTrash, FaExclamationTriangle } from 'react-icons/fa';
+import { FaPlus, FaFile, FaFileAlt, FaFilePdf, FaFileImage, FaFileVideo, FaFileAudio, FaFileArchive, FaFileExcel, FaFilePowerpoint, FaFileWord, FaDownload, FaTrash, FaExclamationTriangle, FaEye } from 'react-icons/fa';
 import useDocumentStore from '../stores/useDocumentStore';
 import useTaskStore from '../stores/useTaskStore';
 import useAuthStore from '../stores/useAuthStore';
 import { Document } from '../services/documentService';
 import { Task } from '../services/taskService';
+import { documentService } from '../services/documentService';
 
 const Documents = () => {
   const { token } = useAuthStore();
@@ -17,6 +18,7 @@ const Documents = () => {
   const [fileError, setFileError] = useState<string | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [filterTaskId, setFilterTaskId] = useState<number | null>(null);
+  const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -89,6 +91,41 @@ const Documents = () => {
         console.error('Error deleting document:', error);
       }
     }
+  };
+  
+  const handleDownloadDocument = async (doc: Document) => {
+    if (!doc.id || !token) return;
+    
+    try {
+      setDownloadingIds(prev => new Set(prev).add(doc.id as string));
+      
+      const blob = await documentService.downloadDocument(token, doc.id);
+      
+      // Create a download link
+      const url = URL.createObjectURL(blob);
+      const a = window.document.createElement('a');
+      a.href = url;
+      a.download = doc.name;
+      window.document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      URL.revokeObjectURL(url);
+      window.document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading document:', error);
+    } finally {
+      setDownloadingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(doc.id as string);
+        return newSet;
+      });
+    }
+  };
+  
+  const handleOpenDocument = (document: Document) => {
+    if (!document.id || !token) return;
+    documentService.openDocumentInNewTab(token, document.id, document.name);
   };
   
   const getFileIcon = (contentType: string) => {
@@ -224,15 +261,25 @@ const Documents = () => {
                   </td>
                   <td>
                     <div className="document-actions">
-                      <a 
-                        href={document.downloadUrl} 
+                      <button 
                         className="icon-button download"
                         title="Download"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        onClick={() => handleDownloadDocument(document)}
+                        disabled={downloadingIds.has(document.id as string)}
                       >
-                        <FaDownload />
-                      </a>
+                        {downloadingIds.has(document.id as string) ? (
+                          <span className="loading-spinner-small"></span>
+                        ) : (
+                          <FaDownload />
+                        )}
+                      </button>
+                      <button 
+                        className="icon-button view"
+                        title="View in Browser"
+                        onClick={() => handleOpenDocument(document)}
+                      >
+                        <FaEye />
+                      </button>
                       {document.id && (
                         <button 
                           className="icon-button delete"

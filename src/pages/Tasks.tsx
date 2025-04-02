@@ -1,11 +1,11 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaCheck, FaPlay, FaClock, FaExclamationTriangle, FaFilter, FaFile, FaFileAlt, FaLink } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaCheck, FaPlay, FaClock, FaExclamationTriangle, FaFilter, FaFile, FaFileAlt, FaLink, FaDownload, FaEye } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import useTaskStore from '../stores/useTaskStore';
 import useDocumentStore from '../stores/useDocumentStore';
 import useAuthStore from '../stores/useAuthStore';
 import { Task, TaskStatus, TaskPriority } from '../services/taskService';
-import { Document } from '../services/documentService';
+import { Document, documentService } from '../services/documentService';
 
 const Tasks = () => {
   const { token } = useAuthStore();
@@ -23,6 +23,7 @@ const Tasks = () => {
   const [filter, setFilter] = useState<{status?: TaskStatus, priority?: TaskPriority}>({});
   const [taskDocuments, setTaskDocuments] = useState<Record<number, Document[]>>({});
   const [expandedTaskId, setExpandedTaskId] = useState<number | null>(null);
+  const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
   
   useEffect(() => {
     if (token) {
@@ -171,6 +172,41 @@ const Tasks = () => {
     setExpandedTaskId(expandedTaskId === taskId ? null : taskId);
   };
   
+  const handleDownloadDocument = async (doc: Document) => {
+    if (!doc.id || !token) return;
+    
+    try {
+      setDownloadingIds(prev => new Set(prev).add(doc.id as string));
+      
+      const blob = await documentService.downloadDocument(token, doc.id);
+      
+      // Create a download link
+      const url = URL.createObjectURL(blob);
+      const a = window.document.createElement('a');
+      a.href = url;
+      a.download = doc.name;
+      window.document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      URL.revokeObjectURL(url);
+      window.document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading document:', error);
+    } finally {
+      setDownloadingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(doc.id as string);
+        return newSet;
+      });
+    }
+  };
+  
+  const handleOpenDocument = (doc: Document) => {
+    if (!doc.id || !token) return;
+    documentService.openDocumentInNewTab(token, doc.id, doc.name);
+  };
+  
   if (isLoading && tasks.length === 0) {
     return (
       <div className="page-container">
@@ -292,15 +328,31 @@ const Tasks = () => {
                       <ul className="documents-list">
                         {taskDocuments[task.id].map(doc => (
                           <li key={doc.id} className="document-item-small">
-                            <a 
-                              href={doc.downloadUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="document-link"
-                            >
+                            <div className="document-item-content">
                               <FaFileAlt className="document-icon" />
                               <span>{doc.name}</span>
-                            </a>
+                            </div>
+                            <div className="document-item-actions">
+                              <button 
+                                onClick={() => handleDownloadDocument(doc)}
+                                className="icon-button small download"
+                                title="Download"
+                                disabled={downloadingIds.has(doc.id as string)}
+                              >
+                                {downloadingIds.has(doc.id as string) ? (
+                                  <span className="loading-spinner-mini"></span>
+                                ) : (
+                                  <FaDownload />
+                                )}
+                              </button>
+                              <button 
+                                onClick={() => handleOpenDocument(doc)}
+                                className="icon-button small view"
+                                title="View"
+                              >
+                                <FaEye />
+                              </button>
+                            </div>
                           </li>
                         ))}
                       </ul>
