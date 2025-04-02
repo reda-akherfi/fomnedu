@@ -175,15 +175,18 @@ body {
   padding: 20px;
   transition: margin-left 0.3s ease;
   padding-top: 80px;
+  width: calc(100% - 250px);
 }
 
 .main-content.sidebar-closed {
-  margin-left: 60px;
+  margin-left: 70px;
+  width: calc(100% - 70px);
 }
 
 .page-container {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 20px;
   width: 100%;
   max-width: 1400px;
@@ -303,8 +306,9 @@ button.secondary:hover {
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 15px;
+  padding: 20px;
   margin-top: 20px;
+  width: 100%;
 }
 
 .task-list h3 {
@@ -489,6 +493,7 @@ button.secondary:hover {
   padding: 16px 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
 }
 
 .page-header h1 {
@@ -574,14 +579,23 @@ button.secondary:hover {
 .module-card-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.module-card-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .module-description {
   color: #666;
   font-size: 14px;
   margin-bottom: 15px;
+  line-height: 1.5;
   flex-grow: 1;
 }
 
@@ -594,6 +608,146 @@ button.secondary:hover {
   border-top: 1px solid #eee;
   padding-top: 10px;
   margin-top: auto;
+}
+
+/* Documents list styles */
+.documents-list-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.documents-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.documents-table th,
+.documents-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.documents-table th {
+  background-color: #f5f5f5;
+  font-weight: 500;
+  color: #555;
+  white-space: nowrap;
+}
+
+.document-row:hover {
+  background-color: #f9f9f9;
+}
+
+.document-name-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.document-name-with-icon svg {
+  font-size: 18px;
+  color: #666;
+}
+
+.document-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Document upload form */
+.upload-form {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.upload-form h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
+  color: #333;
+}
+
+.file-input-container {
+  margin-bottom: 15px;
+}
+
+.file-drop-area {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 25px;
+  text-align: center;
+  margin-bottom: 15px;
+  background-color: #f9f9f9;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.file-drop-area:hover, 
+.file-drop-area.active {
+  border-color: var(--primary-color);
+  background-color: #f0f7ff;
+}
+
+.file-drop-area p {
+  margin: 0;
+  color: #666;
+}
+
+.selected-file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 15px;
+  background-color: #f0f7ff;
+  border-radius: 6px;
+  margin-top: 10px;
+}
+
+.selected-file-name {
+  flex-grow: 1;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selected-file-size {
+  font-size: 12px;
+  color: #666;
+}
+
+.remove-file-btn {
+  background: none;
+  border: none;
+  color: #f44336;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.remove-file-btn:hover {
+  background-color: rgba(244, 67, 54, 0.1);
+  border-radius: 50%;
+}
+
+.upload-button {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.upload-button svg {
+  font-size: 16px;
 }
 
 /* Styles pour le dépôt de documents */
@@ -680,42 +834,77 @@ button.secondary:hover {
   gap: 30px;
 }
 
+.notes-grid-container {
+  width: 100%;
+  padding: 20px 0;
+}
+
 .notes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 25px;
+  width: 100%;
 }
 
 .note-card {
-  background-color: #fffdf0;
-  border-radius: 6px;
-  padding: 15px;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   flex-direction: column;
-  position: relative;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  border-left: 3px solid #ffd700;
+  padding: 20px;
+  height: 100%;
+  border-left: 4px solid #4a6fa5;
+}
+
+.note-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.note-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.note-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+}
+
+.note-content {
+  flex-grow: 1;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #555;
+  margin-bottom: 15px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+}
+
+.note-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 12px;
+  color: #777;
 }
 
 .note-icon {
   color: #ffd700;
   margin-bottom: 10px;
-}
-
-.note-content {
-  flex-grow: 1;
-}
-
-.note-content h3 {
-  font-size: 16px;
-  margin: 0 0 10px 0;
-}
-
-.note-text {
-  font-size: 14px;
-  color: #333;
-  margin-bottom: 15px;
-  white-space: pre-line;
 }
 
 .note-date {
@@ -985,26 +1174,31 @@ button.secondary:hover {
 /* Styles pour la page des vidéos - à ajouter à la fin du fichier CSS */
 
 .videos-container {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
+  width: 100%;
+  padding: 20px 0;
 }
 
 .videos-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  gap: 25px;
+  width: 100%;
 }
 
 .video-card {
   background-color: white;
   border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   flex-direction: column;
-  position: relative;
   height: 100%;
+}
+
+.video-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .video-thumbnail {
