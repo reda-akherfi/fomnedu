@@ -526,7 +526,7 @@ const Tasks = () => {
                       className="start-session-btn"
                       onClick={() => startTaskSession(task.id)}
                     >
-                      <FaPlay /> Start Study Session
+                      <FaPlay /> Start Session
                     </button>
                   </div>
                 )}

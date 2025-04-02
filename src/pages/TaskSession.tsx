@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Rnd } from 'react-rnd';
-import { FaPlay, FaPause, FaStopwatch, FaExpand, FaCompress, FaEye, FaEyeSlash, FaTimes, FaCog, FaChevronLeft, FaFile, FaVideo, FaStickyNote } from 'react-icons/fa';
+import { FaPlay, FaPause, FaStopwatch, FaExpand, FaCompress, FaEye, FaEyeSlash, FaTimes, FaCog, FaChevronLeft, FaFile, FaVideo, FaStickyNote, FaSpinner } from 'react-icons/fa';
 import useTaskStore from '../stores/useTaskStore';
 import useDocumentStore from '../stores/useDocumentStore';
 import useVideoStore from '../stores/useVideoStore';
 import useNoteStore from '../stores/useNoteStore';
+import useTimerStore from '../stores/useTimerStore';
 import useAuthStore from '../stores/useAuthStore';
 import { documentService } from '../services/documentService';
 import { videoService } from '../services/videoService';
+import { Timer, TimerType, TimerStatus } from '../services/timerService';
 import { Task } from '../services/taskService';
 import { Document } from '../services/documentService';
 import { Video } from '../services/videoService';
@@ -34,10 +36,11 @@ const TaskSession = () => {
   const { taskId } = useParams<{ taskId: string }>();
   const navigate = useNavigate();
   const { fetchTaskById } = useTaskStore();
-  const { fetchAllDocuments } = useDocumentStore();
-  const { fetchAllVideos } = useVideoStore();
-  const { fetchAllNotes, addNote, updateNote } = useNoteStore();
   const { token } = useAuthStore();
+  const { 
+    createTimer, pauseTimer, resumeTimer, stopTimer, 
+    fetchTimersForTask, activeTimer, setActiveTimer 
+  } = useTimerStore();
   
   // Task data states
   const [task, setTask] = useState<Task | null>(null);
@@ -47,13 +50,13 @@ const TaskSession = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   // Timer states
-  const [timerMode, setTimerMode] = useState<'pomodoro' | 'custom'>('pomodoro');
+  const [timerMode, setTimerMode] = useState<TimerType>(TimerType.POMODORO);
   const [workDuration, setWorkDuration] = useState(25 * 60); // 25 minutes in seconds
   const [breakDuration, setBreakDuration] = useState(5 * 60); // 5 minutes in seconds
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [timerPhase, setTimerPhase] = useState<'work' | 'break'>('work');
   const [remainingTime, setRemainingTime] = useState(workDuration);
   const [isTimerSettingsOpen, setIsTimerSettingsOpen] = useState(false);
+  const [timerError, setTimerError] = useState<string | null>(null);
+  const [isCreatingTimer, setIsCreatingTimer] = useState(false);
   
   // Section visibility states
   const [sectionVisibility, setSectionVisibility] = useState<SectionVisibility>({
@@ -93,8 +96,8 @@ const TaskSession = () => {
   const [currentDocumentUrl, setCurrentDocumentUrl] = useState<string | null>(null);
   const [documentBlobUrl, setDocumentBlobUrl] = useState<string | null>(null);
   
-  // Timer interval reference
-  const timerInterval = useRef<NodeJS.Timeout | null>(null);
+  // Local timer update reference
+  const localTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Format YouTube URL for embedding
   const formatYouTubeUrl = (url: string) => {
@@ -162,6 +165,18 @@ const TaskSession = () => {
         const taskNts = await useNoteStore.getState().fetchNotesForTask(token, taskId_num);
         setTaskNotes(taskNts);
         
+        // Fetch timers for this task
+        const timers = await fetchTimersForTask(taskId_num);
+        
+        // Set active timer if one exists and is running or paused
+        const runningTimer = timers.find(t => t.status !== TimerStatus.COMPLETED);
+        if (runningTimer) {
+          setActiveTimer(runningTimer);
+          if (runningTimer.remainingSeconds) {
+            setRemainingTime(runningTimer.remainingSeconds);
+          }
+        }
+        
         // Initialize first video if available
         if (taskVids.length > 0) {
           setCurrentVideoUrl(taskVids[0].url);
@@ -178,7 +193,7 @@ const TaskSession = () => {
           const newNoteTitle = `Notes for ${taskData.title}`;
           const emptyContent = '';
           
-          const newNote = await addNote(
+          const newNote = await useNoteStore.getState().addNote(
             token,
             newNoteTitle,
             emptyContent,
@@ -206,42 +221,56 @@ const TaskSession = () => {
     
     loadTaskData();
     
-    // Clean up timer when unmounting
+    // Clean up local timer when unmounting
     return () => {
-      if (timerInterval.current) {
-        clearInterval(timerInterval.current);
+      if (localTimerRef.current) {
+        clearInterval(localTimerRef.current);
       }
     };
-  }, [taskId, token, fetchTaskById, addNote]);
+  }, [taskId, token, fetchTaskById, fetchTimersForTask, setActiveTimer]);
   
-  // Timer logic
+  // Effect to update timer UI from active timer
   useEffect(() => {
-    if (isTimerRunning) {
-      timerInterval.current = setInterval(() => {
-        setRemainingTime(prev => {
-          if (prev <= 1) {
-            // Change phase (work <-> break)
-            const newPhase = timerPhase === 'work' ? 'break' : 'work';
-            setTimerPhase(newPhase);
-            // Play notification sound
-            const audio = new Audio('/notification.mp3');
-            audio.play().catch(e => console.log('Audio error:', e));
-            // Set new duration
-            return newPhase === 'work' ? workDuration : breakDuration;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else if (timerInterval.current) {
-      clearInterval(timerInterval.current);
+    // If we have an active timer from the server
+    if (activeTimer) {
+      // Update UI based on timer state
+      if (activeTimer.timerType) {
+        setTimerMode(activeTimer.timerType);
+      }
+      
+      // Update remaining time display
+      if (activeTimer.remainingSeconds !== undefined) {
+        setRemainingTime(activeTimer.remainingSeconds);
+      }
+      
+      // Start local timer update if timer is running
+      if (activeTimer.status === TimerStatus.RUNNING && !localTimerRef.current) {
+        localTimerRef.current = setInterval(() => {
+          setRemainingTime(prev => {
+            if (prev <= 1) {
+              // We'll let the server handle this case in a real implementation
+              // For now, just reset the timer for demo purposes
+              return activeTimer.timerType === TimerType.POMODORO ? 
+                (activeTimer.isBreak ? workDuration : breakDuration) : 
+                0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      } else if (activeTimer.status !== TimerStatus.RUNNING && localTimerRef.current) {
+        // Clear interval if timer is paused or stopped
+        clearInterval(localTimerRef.current);
+        localTimerRef.current = null;
+      }
     }
     
     return () => {
-      if (timerInterval.current) {
-        clearInterval(timerInterval.current);
+      if (localTimerRef.current) {
+        clearInterval(localTimerRef.current);
+        localTimerRef.current = null;
       }
     };
-  }, [isTimerRunning, timerPhase, workDuration, breakDuration]);
+  }, [activeTimer, workDuration, breakDuration]);
   
   // Format time remaining
   const formatTime = (seconds: number) => {
@@ -251,21 +280,72 @@ const TaskSession = () => {
   };
   
   // Start/Stop timer
-  const toggleTimer = () => {
-    setIsTimerRunning(!isTimerRunning);
+  const toggleTimer = async () => {
+    if (!taskId || !token) return;
+    
+    try {
+      setTimerError(null);
+      
+      if (!activeTimer) {
+        // Create a new timer
+        setIsCreatingTimer(true);
+        
+        const newTimer: Omit<Timer, 'id' | 'createdAt' | 'status'> = {
+          timerType: timerMode,
+          taskIds: [parseInt(taskId)],
+          title: task?.title ? `Timer for ${task.title}` : 'Study Session',
+          durationSeconds: timerMode !== TimerType.STOPWATCH ? workDuration : undefined,
+          isBreak: false
+        };
+        
+        await createTimer(newTimer);
+      } else if (activeTimer.status === TimerStatus.RUNNING) {
+        // Pause the timer
+        await pauseTimer(activeTimer.id!);
+      } else if (activeTimer.status === TimerStatus.PAUSED) {
+        // Resume the timer
+        await resumeTimer(activeTimer.id!);
+      }
+    } catch (error) {
+      setTimerError(error instanceof Error ? error.message : 'Error managing timer');
+      console.error('Timer error:', error);
+    } finally {
+      setIsCreatingTimer(false);
+    }
   };
   
   // Reset timer
-  const resetTimer = () => {
-    setIsTimerRunning(false);
-    setTimerPhase('work');
-    setRemainingTime(workDuration);
+  const resetTimer = async () => {
+    if (!activeTimer || !activeTimer.id) return;
+    
+    try {
+      setTimerError(null);
+      
+      // Stop the current timer
+      await stopTimer(activeTimer.id);
+      
+      // Create a new timer for next session if needed
+      if (taskId && token) {
+        const newTimer: Omit<Timer, 'id' | 'createdAt' | 'status'> = {
+          timerType: timerMode,
+          taskIds: [parseInt(taskId)],
+          title: task?.title ? `Timer for ${task.title}` : 'Study Session',
+          durationSeconds: timerMode !== TimerType.STOPWATCH ? workDuration : undefined,
+          isBreak: false
+        };
+        
+        await createTimer(newTimer);
+      }
+    } catch (error) {
+      setTimerError(error instanceof Error ? error.message : 'Error resetting timer');
+      console.error('Timer reset error:', error);
+    }
   };
   
   // Save note content
   const saveNoteContent = async () => {
     if (currentNoteId && token) {
-      await updateNote(
+      await useNoteStore.getState().updateNote(
         token,
         currentNoteId,
         noteTitle,
@@ -326,9 +406,19 @@ const TaskSession = () => {
   const isAnyFullscreen = Object.values(sectionFullscreen).some(value => value);
   
   // Exit session
-  const exitSession = () => {
+  const exitSession = async () => {
     // Save notes before leaving
-    saveNoteContent();
+    await saveNoteContent();
+    
+    // If there's an active timer, pause it
+    if (activeTimer && activeTimer.status === TimerStatus.RUNNING && activeTimer.id) {
+      try {
+        await pauseTimer(activeTimer.id);
+      } catch (error) {
+        console.error('Error pausing timer on exit:', error);
+      }
+    }
+    
     navigate('/tasks');
   };
 
@@ -336,7 +426,10 @@ const TaskSession = () => {
   if (isLoading) {
     return (
       <div className="session-container">
-        <div className="loading-state">Loading session...</div>
+        <div className="loading-state">
+          <FaSpinner className="loading-spinner" />
+          <div>Loading session...</div>
+        </div>
       </div>
     );
   }
@@ -354,16 +447,27 @@ const TaskSession = () => {
         </div>
         
         <div className="timer-container">
-          <div className={`timer ${timerPhase === 'break' ? 'timer-break' : ''}`}>
-            <span className="timer-phase">{timerPhase === 'work' ? 'Work' : 'Break'}</span>
+          <div className={`timer ${activeTimer?.isBreak ? 'timer-break' : ''}`}>
+            <span className="timer-phase">
+              {activeTimer?.isBreak ? 'Break' : 'Work'}
+            </span>
             <span className="timer-display">{formatTime(remainingTime)}</span>
           </div>
           
           <div className="timer-controls">
-            <button onClick={toggleTimer}>
-              {isTimerRunning ? <FaPause /> : <FaPlay />}
+            <button 
+              onClick={toggleTimer} 
+              disabled={isCreatingTimer}
+            >
+              {isCreatingTimer ? (
+                <FaSpinner className="loading-spinner-small" />
+              ) : activeTimer?.status === TimerStatus.RUNNING ? (
+                <FaPause />
+              ) : (
+                <FaPlay />
+              )}
             </button>
-            <button onClick={resetTimer}>
+            <button onClick={resetTimer} disabled={!activeTimer || isCreatingTimer}>
               <FaStopwatch />
             </button>
             <button onClick={() => setIsTimerSettingsOpen(!isTimerSettingsOpen)}>
@@ -380,12 +484,11 @@ const TaskSession = () => {
                     <input
                       type="radio"
                       name="timerMode"
-                      checked={timerMode === 'pomodoro'}
+                      checked={timerMode === TimerType.POMODORO}
                       onChange={() => {
-                        setTimerMode('pomodoro');
+                        setTimerMode(TimerType.POMODORO);
                         setWorkDuration(25 * 60);
                         setBreakDuration(5 * 60);
-                        resetTimer();
                       }}
                     />
                     Pomodoro (25/5)
@@ -394,14 +497,23 @@ const TaskSession = () => {
                     <input
                       type="radio"
                       name="timerMode"
-                      checked={timerMode === 'custom'}
-                      onChange={() => setTimerMode('custom')}
+                      checked={timerMode === TimerType.COUNTDOWN}
+                      onChange={() => setTimerMode(TimerType.COUNTDOWN)}
                     />
-                    Custom
+                    Countdown
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      name="timerMode"
+                      checked={timerMode === TimerType.STOPWATCH}
+                      onChange={() => setTimerMode(TimerType.STOPWATCH)}
+                    />
+                    Stopwatch
                   </label>
                 </div>
                 
-                {timerMode === 'custom' && (
+                {timerMode !== TimerType.STOPWATCH && (
                   <div className="custom-timer-inputs">
                     <div>
                       <label>Work duration (min)</label>
@@ -413,31 +525,28 @@ const TaskSession = () => {
                         onChange={(e) => {
                           const newDuration = parseInt(e.target.value) * 60;
                           setWorkDuration(newDuration);
-                          if (timerPhase === 'work') {
-                            setRemainingTime(newDuration);
-                          }
                         }}
                       />
                     </div>
-                    <div>
-                      <label>Break duration (min)</label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="30"
-                        value={Math.floor(breakDuration / 60)}
-                        onChange={(e) => {
-                          const newDuration = parseInt(e.target.value) * 60;
-                          setBreakDuration(newDuration);
-                          if (timerPhase === 'break') {
-                            setRemainingTime(newDuration);
-                          }
-                        }}
-                      />
-                    </div>
+                    {timerMode === TimerType.POMODORO && (
+                      <div>
+                        <label>Break duration (min)</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="30"
+                          value={Math.floor(breakDuration / 60)}
+                          onChange={(e) => {
+                            const newDuration = parseInt(e.target.value) * 60;
+                            setBreakDuration(newDuration);
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
+              {timerError && <div className="timer-error">{timerError}</div>}
               <button onClick={() => setIsTimerSettingsOpen(false)}>Close</button>
             </div>
           )}
@@ -484,30 +593,7 @@ const TaskSession = () => {
       <div className="sections-container">
         {/* Documents Section */}
         {sectionVisibility.documents && (
-          <Rnd
-            default={sectionPositions.documents}
-            minWidth={300}
-            minHeight={200}
-            bounds=".sections-container"
-            disableDragging={isAnyFullscreen}
-            enableResizing={!isAnyFullscreen}
-            className={`section ${sectionFullscreen.documents ? 'fullscreen' : ''}`}
-            onDragStop={(_e, d) => {
-              handleSectionChange('documents', {
-                ...sectionPositions.documents,
-                x: d.x,
-                y: d.y
-              });
-            }}
-            onResizeStop={(_e, _direction, ref, _delta, position) => {
-              handleSectionChange('documents', {
-                width: parseInt(ref.style.width),
-                height: parseInt(ref.style.height),
-                x: position.x,
-                y: position.y
-              });
-            }}
-          >
+          <div className={`section ${sectionFullscreen.documents ? 'fullscreen' : ''}`}>
             <div className="section-header">
               <h2>Documents</h2>
               <div className="section-controls">
@@ -552,35 +638,12 @@ const TaskSession = () => {
                 )}
               </div>
             </div>
-          </Rnd>
+          </div>
         )}
         
         {/* Videos Section */}
         {sectionVisibility.videos && (
-          <Rnd
-            default={sectionPositions.videos}
-            minWidth={300}
-            minHeight={200}
-            bounds=".sections-container"
-            disableDragging={isAnyFullscreen}
-            enableResizing={!isAnyFullscreen}
-            className={`section ${sectionFullscreen.videos ? 'fullscreen' : ''}`}
-            onDragStop={(_e, d) => {
-              handleSectionChange('videos', {
-                ...sectionPositions.videos,
-                x: d.x,
-                y: d.y
-              });
-            }}
-            onResizeStop={(_e, _direction, ref, _delta, position) => {
-              handleSectionChange('videos', {
-                width: parseInt(ref.style.width),
-                height: parseInt(ref.style.height),
-                x: position.x,
-                y: position.y
-              });
-            }}
-          >
+          <div className={`section ${sectionFullscreen.videos ? 'fullscreen' : ''}`}>
             <div className="section-header">
               <h2>Videos</h2>
               <div className="section-controls">
@@ -640,35 +703,12 @@ const TaskSession = () => {
                 )}
               </div>
             </div>
-          </Rnd>
+          </div>
         )}
         
         {/* Notes Section */}
         {sectionVisibility.notes && (
-          <Rnd
-            default={sectionPositions.notes}
-            minWidth={300}
-            minHeight={200}
-            bounds=".sections-container"
-            disableDragging={isAnyFullscreen}
-            enableResizing={!isAnyFullscreen}
-            className={`section ${sectionFullscreen.notes ? 'fullscreen' : ''}`}
-            onDragStop={(_e, d) => {
-              handleSectionChange('notes', {
-                ...sectionPositions.notes,
-                x: d.x,
-                y: d.y
-              });
-            }}
-            onResizeStop={(_e, _direction, ref, _delta, position) => {
-              handleSectionChange('notes', {
-                width: parseInt(ref.style.width),
-                height: parseInt(ref.style.height),
-                x: position.x,
-                y: position.y
-              });
-            }}
-          >
+          <div className={`section ${sectionFullscreen.notes ? 'fullscreen' : ''}`}>
             <div className="section-header">
               <h2>Notes</h2>
               <div className="section-controls">
@@ -715,35 +755,12 @@ const TaskSession = () => {
                 </div>
               </div>
             </div>
-          </Rnd>
+          </div>
         )}
         
         {/* Chatbot Section */}
         {sectionVisibility.chatbot && (
-          <Rnd
-            default={sectionPositions.chatbot}
-            minWidth={300}
-            minHeight={200}
-            bounds=".sections-container"
-            disableDragging={isAnyFullscreen}
-            enableResizing={!isAnyFullscreen}
-            className={`section ${sectionFullscreen.chatbot ? 'fullscreen' : ''}`}
-            onDragStop={(_e, d) => {
-              handleSectionChange('chatbot', {
-                ...sectionPositions.chatbot,
-                x: d.x,
-                y: d.y
-              });
-            }}
-            onResizeStop={(_e, _direction, ref, _delta, position) => {
-              handleSectionChange('chatbot', {
-                width: parseInt(ref.style.width),
-                height: parseInt(ref.style.height),
-                x: position.x,
-                y: position.y
-              });
-            }}
-          >
+          <div className={`section ${sectionFullscreen.chatbot ? 'fullscreen' : ''}`}>
             <div className="section-header">
               <h2>AI Assistant</h2>
               <div className="section-controls">
@@ -783,7 +800,7 @@ const TaskSession = () => {
                 Note: RAG AI will be integrated later via the backend
               </div>
             </div>
-          </Rnd>
+          </div>
         )}
       </div>
     </div>
