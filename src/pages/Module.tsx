@@ -1,38 +1,64 @@
 import { useState, useEffect } from 'react';
 import { FaPlus, FaTrash, FaFolder, FaPlay, FaEdit, FaExclamationTriangle, FaCheck } from 'react-icons/fa';
 import useModuleStore, { Module as ModuleType } from '../stores/useModuleStore';
+import useTaskStore from '../stores/useTaskStore';
 import useAuthStore from '../stores/useAuthStore';
+import { Task } from '../services/taskService';
 import { useNavigate } from 'react-router-dom';
-
-// For task selection in the module form
-interface Task {
-  id: number;
-  name: string;
-}
-
-// Mock tasks for demonstration - in a real app, these would come from the API
-const availableTasks: Task[] = [
-  { id: 1, name: 'Task 1' },
-  { id: 2, name: 'Task 2' },
-  { id: 3, name: 'Task 3' },
-  { id: 4, name: 'Task 4' },
-  { id: 5, name: 'Task 5' },
-];
 
 const Module = () => {
   const navigate = useNavigate();
   const { token } = useAuthStore();
   const { modules, isLoading, error, fetchModules, addModule, updateModule, deleteModule } = useModuleStore();
+  const { 
+    tasks, 
+    isLoading: tasksLoading, 
+    error: tasksError, 
+    fetchAllTasks,
+    fetchTasksByBatchIds
+  } = useTaskStore();
+  
   const [showModal, setShowModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentModuleId, setCurrentModuleId] = useState<number | string | null>(null);
   const [moduleName, setModuleName] = useState('');
   const [moduleDescription, setModuleDescription] = useState('');
   const [selectedTaskIds, setSelectedTaskIds] = useState<number[]>([]);
+  const [availableTasks, setAvailableTasks] = useState<Task[]>([]);
+  const [moduleTasksMap, setModuleTasksMap] = useState<Record<string | number, Task[]>>({});
   
   useEffect(() => {
     fetchModules();
-  }, [fetchModules, token]);
+    fetchAllTasks();
+  }, [fetchModules, fetchAllTasks, token]);
+  
+  // Load tasks details for modules
+  useEffect(() => {
+    const loadModuleTasks = async () => {
+      const tasksMap: Record<string | number, Task[]> = {};
+      
+      for (const module of modules) {
+        if (module.taskIds && module.taskIds.length > 0) {
+          const moduleTasks = await fetchTasksByBatchIds(module.taskIds);
+          tasksMap[module.id] = moduleTasks;
+        } else {
+          tasksMap[module.id] = [];
+        }
+      }
+      
+      setModuleTasksMap(tasksMap);
+    };
+    
+    if (modules.length > 0 && !tasksLoading) {
+      loadModuleTasks();
+    }
+  }, [modules, fetchTasksByBatchIds, tasksLoading]);
+  
+  useEffect(() => {
+    if (!tasksLoading) {
+      setAvailableTasks(tasks);
+    }
+  }, [tasks, tasksLoading]);
 
   const handleOpenModal = (moduleToEdit: ModuleType | null = null) => {
     if (moduleToEdit) {
@@ -101,7 +127,7 @@ const Module = () => {
     });
   };
 
-  if (isLoading && modules.length === 0) {
+  if ((isLoading && modules.length === 0) || tasksLoading) {
     return (
       <div className="page-container">
         <div className="loading-state">Loading modules...</div>
@@ -118,9 +144,9 @@ const Module = () => {
         </button>
       </div>
 
-      {error && (
+      {(error || tasksError) && (
         <div className="error-message">
-          <FaExclamationTriangle /> {error}
+          <FaExclamationTriangle /> {error || tasksError}
         </div>
       )}
 
@@ -132,45 +158,62 @@ const Module = () => {
         </div>
       ) : (
         <div className="module-grid">
-          {modules.map(module => (
-            <div key={module.id} className="module-card">
-              <div className="module-card-header">
-                <h3>{module.name}</h3>
-                <div className="module-actions">
+          {modules.map(module => {
+            const moduleTasks = moduleTasksMap[module.id] || [];
+            
+            return (
+              <div key={module.id} className="module-card">
+                <div className="module-card-header">
+                  <h3>{module.name}</h3>
+                  <div className="module-actions">
+                    <button 
+                      className="icon-button edit" 
+                      onClick={() => handleOpenModal(module)}
+                    >
+                      <FaEdit />
+                    </button>
+                    <button 
+                      className="icon-button delete" 
+                      onClick={() => handleDeleteModule(module.id, module.name)}
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                </div>
+                
+                {module.description && (
+                  <p className="module-description">{module.description}</p>
+                )}
+                
+                <div className="module-info">
+                  <span>Tasks: {module.taskIds ? module.taskIds.length : 0}</span>
+                </div>
+                
+                {moduleTasks.length > 0 && (
+                  <div className="module-tasks">
+                    <h4>Associated Tasks:</h4>
+                    <ul className="task-chips">
+                      {moduleTasks.map(task => (
+                        <li key={task.id} className="task-chip">
+                          {task.title}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                <div className="module-footer">
+                  <span>Created on {formatDate(module.createdAt)}</span>
                   <button 
-                    className="icon-button edit" 
-                    onClick={() => handleOpenModal(module)}
+                    className="start-session-btn"
+                    onClick={() => startSession(module.id)}
                   >
-                    <FaEdit />
-                  </button>
-                  <button 
-                    className="icon-button delete" 
-                    onClick={() => handleDeleteModule(module.id, module.name)}
-                  >
-                    <FaTrash />
+                    <FaPlay /> Start Session
                   </button>
                 </div>
               </div>
-              
-              {module.description && (
-                <p className="module-description">{module.description}</p>
-              )}
-              
-              <div className="module-info">
-                <span>Tasks: {module.taskIds ? module.taskIds.length : 0}</span>
-              </div>
-              
-              <div className="module-footer">
-                <span>Created on {formatDate(module.createdAt)}</span>
-                <button 
-                  className="start-session-btn"
-                  onClick={() => startSession(module.id)}
-                >
-                  <FaPlay /> Start Session
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -204,23 +247,29 @@ const Module = () => {
             
             <div className="form-group">
               <label>Associated Tasks</label>
-              <div className="tasks-selection">
-                {availableTasks.map(task => (
-                  <div key={task.id} className="task-checkbox">
-                    <label className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={selectedTaskIds.includes(task.id)}
-                        onChange={() => handleTaskToggle(task.id)}
-                      />
-                      <span className="checkbox-custom">
-                        {selectedTaskIds.includes(task.id) && <FaCheck className="checkbox-icon" />}
-                      </span>
-                      {task.name}
-                    </label>
-                  </div>
-                ))}
-              </div>
+              {availableTasks.length === 0 ? (
+                <div className="no-tasks-message">
+                  No tasks available. <a href="/tasks" onClick={(e) => { e.preventDefault(); navigate('/tasks'); }}>Create some tasks</a> first.
+                </div>
+              ) : (
+                <div className="tasks-selection">
+                  {availableTasks.map(task => (
+                    <div key={task.id} className="task-checkbox">
+                      <label className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={selectedTaskIds.includes(task.id as number)}
+                          onChange={() => handleTaskToggle(task.id as number)}
+                        />
+                        <span className="checkbox-custom">
+                          {selectedTaskIds.includes(task.id as number) && <FaCheck className="checkbox-icon" />}
+                        </span>
+                        {task.title}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             
             <div className="modal-actions">

@@ -1,5 +1,5 @@
 import { NavLink, Link } from 'react-router-dom'
-import { FaHome, FaClipboardList, FaFolder, FaRobot, FaStickyNote, FaChevronLeft, FaChevronRight, FaVideo } from 'react-icons/fa'
+import { FaHome, FaClipboardList, FaFolder, FaRobot, FaStickyNote, FaChevronLeft, FaChevronRight, FaVideo, FaTasks } from 'react-icons/fa'
 
 interface SidebarProps {
   isOpen: boolean
@@ -35,6 +35,13 @@ const Sidebar = ({ isOpen, toggleSidebar }: SidebarProps) => {
             <FaClipboardList />
           </div>
           {isOpen && <span className="nav-text">Module</span>}
+        </NavLink>
+        
+        <NavLink to="/tasks" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <div className="nav-icon">
+            <FaTasks />
+          </div>
+          {isOpen && <span className="nav-text">Tasks</span>}
         </NavLink>
         
         <NavLink to="/doc-repo" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>

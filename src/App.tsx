@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Auth from './pages/Auth'
 import Home from './pages/Home'
 import Module from './pages/Module'
+import Tasks from './pages/Tasks'
 import DocRepo from './pages/DocRepo'
 import Videos from './pages/Videos'
 import Chatbot from './pages/Chatbot'
@@ -38,6 +39,7 @@ function App() {
                   <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/module" element={<Module />} />
+                    <Route path="/tasks" element={<Tasks />} />
                     <Route path="/doc-repo" element={<DocRepo />} />
                     <Route path="/videos" element={<Videos />} />
                     <Route path="/notes" element={<NoteView />} />
