@@ -1,138 +1,128 @@
-import { useState, useEffect } from 'react';
-import { FaFolder, FaVideo, FaPlus, FaTrash, FaLink, FaEdit, FaExternalLinkAlt, FaExclamationTriangle, FaFilter, FaPlay, FaYoutube } from 'react-icons/fa';
+import { useState, useEffect, FormEvent } from 'react';
+import { FaPlus, FaTrash, FaLink, FaEdit, FaExclamationTriangle, FaFilter, FaPlay, FaYoutube } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import useModuleStore, { Video } from '../stores/useModuleStore';
 import useVideoStore from '../stores/useVideoStore';
 import useTaskStore from '../stores/useTaskStore';
 import useAuthStore from '../stores/useAuthStore';
-import { videoService } from '../services/videoService';
-import { Task } from '../services/taskService';
+import { Video, videoService } from '../services/videoService';
 
 const Videos = () => {
-  const { modules, videos, addVideo, updateVideo, deleteVideo } = useModuleStore();
   const { token } = useAuthStore();
-  const { isLoading, error, fetchAllVideos, addVideo: videoStoreAddVideo, updateVideo: videoStoreUpdateVideo, deleteVideo: videoStoreDeleteVideo } = useVideoStore();
+  const { videos, isLoading, error, fetchAllVideos, addVideo, updateVideo, deleteVideo } = useVideoStore();
   const { tasks, fetchAllTasks } = useTaskStore();
   
   const [showModal, setShowModal] = useState(false);
-  const [selectedModule, setSelectedModule] = useState<string | null>(null);
-  const [videoTitle, setVideoTitle] = useState('');
-  const [videoUrl, setVideoUrl] = useState('');
-  const [videoThumbnail, setVideoThumbnail] = useState('');
-  const [videoDescription, setVideoDescription] = useState('');
-  
-  // Pour l'édition des vidéos
-  const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editUrl, setEditUrl] = useState('');
-  const [editThumbnail, setEditThumbnail] = useState('');
-  const [editDescription, setEditDescription] = useState('');
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [currentVideoId, setCurrentVideoId] = useState<number | null>(null);
+  const [title, setTitle] = useState('');
+  const [url, setUrl] = useState('');
   const [selectedTaskIds, setSelectedTaskIds] = useState<number[]>([]);
   const [urlError, setUrlError] = useState<string | null>(null);
   const [filterTaskId, setFilterTaskId] = useState<number | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
-
+  
+  // Fetch initial data
   useEffect(() => {
     if (token) {
       fetchAllVideos(token);
       fetchAllTasks();
     }
   }, [token, fetchAllVideos, fetchAllTasks]);
-
-  const handleAddVideo = async () => {
-    if (!selectedModule || !videoTitle.trim() || !videoUrl.trim()) return;
+  
+  // Open modal for adding/editing
+  const handleOpenModal = (videoToEdit: Video | null = null) => {
+    if (videoToEdit) {
+      // Edit mode
+      setIsEditMode(true);
+      setCurrentVideoId(videoToEdit.id ?? null);
+      setTitle(videoToEdit.title);
+      setUrl(videoToEdit.url);
+      setSelectedTaskIds(videoToEdit.taskIds || []);
+    } else {
+      // Create mode
+      setIsEditMode(false);
+      setCurrentVideoId(null);
+      setTitle('');
+      setUrl('');
+      setSelectedTaskIds([]);
+    }
+    setUrlError(null);
+    setShowModal(true);
+  };
+  
+  // Handle form submission
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
     
-    const videoId = videoService.getYouTubeVideoId(videoUrl);
-    if (!videoId) {
+    console.log("Form submitted with:", { title, url, selectedTaskIds });
+    
+    // Validate input
+    if (!title.trim()) return;
+    if (!url.trim()) {
+      setUrlError('URL is required');
+      return;
+    }
+    
+    // Validate YouTube URL
+    const youtubeId = videoService.getYouTubeVideoId(url);
+    if (!youtubeId) {
       setUrlError('Please enter a valid YouTube URL');
       return;
     }
     
-    if (editingVideoId) {
-      await videoStoreUpdateVideo(
-        token,
-        editingVideoId,
-        videoTitle.trim(),
-        videoUrl.trim(),
-        selectedTaskIds.length > 0 ? selectedTaskIds : undefined
-      );
-    } else {
-      await videoStoreAddVideo(
-        token,
-        selectedModule,
-        videoTitle.trim(),
-        videoUrl.trim(),
-        selectedTaskIds.length > 0 ? selectedTaskIds : undefined
-      );
-    }
-    
-    resetForm();
-    setShowModal(false);
-  };
-
-  const startEditingVideo = (video: Video) => {
-    setEditingVideoId(video.id);
-    setEditTitle(video.title);
-    setEditUrl(video.url);
-    setEditThumbnail(video.thumbnailUrl || '');
-    setEditDescription(video.description || '');
-    setSelectedTaskIds(video.taskIds || []);
-  };
-
-  const saveVideoEdit = () => {
-    if (!editingVideoId || !editTitle.trim() || !editUrl.trim()) return;
-    
-    updateVideo(
-      editingVideoId,
-      {
-        title: editTitle.trim(),
-        url: editUrl.trim(),
-        thumbnailUrl: editThumbnail.trim() || undefined,
-        description: editDescription.trim() || undefined
+    try {
+      console.log("About to save video with data:", {
+        isEditMode,
+        currentVideoId,
+        title: title.trim(),
+        url: url.trim(),
+        selectedTaskIds
+      });
+      
+      if (isEditMode && currentVideoId) {
+        // Update existing video
+        await updateVideo(
+          token, 
+          currentVideoId, 
+          title.trim(), 
+          url.trim(), 
+          selectedTaskIds
+        );
+        console.log("Video updated successfully");
+      } else {
+        // Create new video
+        await addVideo(
+          token,
+          title.trim(),
+          url.trim(),
+          selectedTaskIds
+        );
+        console.log("Video added successfully");
       }
-    );
-    
-    cancelEditingVideo();
+      
+      setShowModal(false);
+      resetForm();
+    } catch (error) {
+      console.error('Error saving video:', error);
+    }
   };
-
-  const cancelEditingVideo = () => {
-    setEditingVideoId(null);
-    setEditTitle('');
-    setEditUrl('');
-    setEditThumbnail('');
-    setEditDescription('');
-    setSelectedTaskIds([]);
+  
+  // Delete a video
+  const handleDeleteVideo = async (id: number) => {
+    if (window.confirm(`Are you sure you want to delete this video?`)) {
+      await deleteVideo(token, id);
+    }
   };
-
+  
+  // Reset the form
   const resetForm = () => {
-    setVideoTitle('');
-    setVideoUrl('');
-    setVideoThumbnail('');
-    setVideoDescription('');
+    setTitle('');
+    setUrl('');
     setSelectedTaskIds([]);
     setUrlError(null);
   };
-
-  const openVideoModal = (moduleId: string) => {
-    setSelectedModule(moduleId);
-    setShowModal(true);
-  };
-
-  // Groupe les vidéos par moduleId
-  const videosByModule: Record<string, Video[]> = {};
-  videos.forEach(video => {
-    if (!videosByModule[video.moduleId]) {
-      videosByModule[video.moduleId] = [];
-    }
-    videosByModule[video.moduleId].push(video);
-  });
-
-  // Obtenir le nom du module à partir de son ID
-  const getModuleName = (moduleId: string): string => {
-    const module = modules.find(m => m.id === moduleId);
-    return module ? module.name : 'Module inconnu';
-  };
-
+  
+  // Toggle task selection
   const handleTaskToggle = (taskId: number) => {
     setSelectedTaskIds(prev => 
       prev.includes(taskId)
@@ -140,39 +130,43 @@ const Videos = () => {
         : [...prev, taskId]
     );
   };
-
+  
+  // Get YouTube thumbnail from URL
   const getYouTubeThumbnail = (url: string) => {
     const videoId = videoService.getYouTubeVideoId(url);
-    return videoId ? videoService.getYouTubeThumbnailUrl(videoId) : '';
+    if (videoId) {
+      return videoService.getYouTubeThumbnailUrl(videoId);
+    }
+    return '';
   };
-
+  
+  // Format date for display
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'Unknown';
-    
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
   };
-
+  
+  // Get tasks associated with a video
   const getAssociatedTasks = (video: Video) => {
+    if (!video.taskIds) return [];
     return tasks.filter(task => video.taskIds.includes(task.id as number));
   };
-
-  const openYouTubeVideo = (url: string) => {
-    window.open(url, '_blank');
-  };
-
+  
+  // Handle video playback
   const handlePlayVideo = (video: Video) => {
     setSelectedVideo(video);
   };
-
+  
+  // Filter videos by task
   const filteredVideos = filterTaskId
-    ? videos.filter(video => video.taskIds.includes(filterTaskId))
+    ? videos.filter(video => video.taskIds && video.taskIds.includes(filterTaskId))
     : videos;
-
+  
+  // Show loading state
   if (isLoading && videos.length === 0) {
     return (
       <div className="page-container">
@@ -180,7 +174,7 @@ const Videos = () => {
       </div>
     );
   }
-
+  
   return (
     <div className="page-container">
       <div className="page-header">
@@ -214,7 +208,7 @@ const Videos = () => {
           <Link to="/tasks" className="tasks-link-button">
             <FaLink /> Tasks
           </Link>
-          <button className="create-button" onClick={() => openVideoModal(selectedModule || '')}>
+          <button className="create-button" onClick={() => handleOpenModal()}>
             <FaPlus /> Add Video
           </button>
         </div>
@@ -235,15 +229,17 @@ const Videos = () => {
             </button>
           </div>
           <div className="video-player-frame">
-            <iframe
-              width="100%"
-              height="100%"
-              src={`https://www.youtube.com/embed/${videoService.getYouTubeVideoId(selectedVideo.url)}?autoplay=1`}
-              title={selectedVideo.title}
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
+            {videoService.getYouTubeVideoId(selectedVideo.url) && (
+              <iframe
+                width="100%"
+                height="100%"
+                src={`https://www.youtube.com/embed/${videoService.getYouTubeVideoId(selectedVideo.url) || ''}?autoplay=1`}
+                title={selectedVideo.title}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            )}
           </div>
         </div>
       )}
@@ -254,7 +250,7 @@ const Videos = () => {
             <div className="empty-state">
               <FaYoutube size={48} />
               <p>No videos found</p>
-              <button onClick={() => openVideoModal(selectedModule || '')}>Add your first video</button>
+              <button onClick={() => handleOpenModal()}>Add your first video</button>
             </div>
           ) : (
             <div className="videos-grid">
@@ -303,7 +299,7 @@ const Videos = () => {
                       className="icon-button edit" 
                       onClick={(e) => {
                         e.stopPropagation();
-                        startEditingVideo(video);
+                        handleOpenModal(video);
                       }}
                       title="Edit"
                     >
@@ -313,8 +309,8 @@ const Videos = () => {
                       className="icon-button delete" 
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (window.confirm(`Êtes-vous sûr de vouloir supprimer la vidéo "${video.title}" ?`)) {
-                          videoStoreDeleteVideo(token, video.id);
+                        if (video.id) {
+                          handleDeleteVideo(video.id);
                         }
                       }}
                       title="Delete"
@@ -332,15 +328,15 @@ const Videos = () => {
       {showModal && (
         <div className="modal-backdrop">
           <div className="modal-content">
-            <h2>{editingVideoId ? 'Edit Video' : 'Add Video'}</h2>
-            <form onSubmit={handleAddVideo}>
+            <h2>{isEditMode ? 'Edit Video' : 'Add Video'}</h2>
+            <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label htmlFor="videoTitle">Title *</label>
                 <input
                   id="videoTitle"
                   type="text"
-                  value={videoTitle}
-                  onChange={(e) => setVideoTitle(e.target.value)}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
                   placeholder="Video title"
                   required
                 />
@@ -351,19 +347,19 @@ const Videos = () => {
                 <input
                   id="videoUrl"
                   type="text"
-                  value={videoUrl}
+                  value={url}
                   onChange={(e) => {
-                    setVideoUrl(e.target.value);
+                    setUrl(e.target.value);
                     setUrlError(null); // Clear error when user modifies URL
                   }}
                   placeholder="https://www.youtube.com/watch?v=..."
                   required
                 />
                 {urlError && <div className="error-text">{urlError}</div>}
-                {videoUrl && videoService.getYouTubeVideoId(videoUrl) && (
+                {url && videoService.getYouTubeVideoId(url) && (
                   <div className="video-preview-container">
                     <img 
-                      src={getYouTubeThumbnail(videoUrl)}
+                      src={getYouTubeThumbnail(url)}
                       alt="Video thumbnail"
                       className="video-preview-thumbnail"
                     />
@@ -375,7 +371,7 @@ const Videos = () => {
                 <label>Associate with Tasks (optional)</label>
                 {tasks.length === 0 ? (
                   <div className="no-tasks-message">
-                    No tasks available. <a href="/tasks">Create some tasks</a> first.
+                    No tasks available. <Link to="/tasks">Create some tasks</Link> first.
                   </div>
                 ) : (
                   <div className="tasks-selection">
@@ -399,9 +395,9 @@ const Videos = () => {
               <div className="modal-actions">
                 <button 
                   type="submit"
-                  disabled={!videoTitle.trim() || !videoUrl.trim() || isLoading}
+                  disabled={!title.trim() || !url.trim() || isLoading}
                 >
-                  {isLoading ? 'Processing...' : editingVideoId ? 'Update Video' : 'Add Video'}
+                  {isLoading ? 'Processing...' : isEditMode ? 'Update Video' : 'Add Video'}
                 </button>
                 <button 
                   type="button" 
