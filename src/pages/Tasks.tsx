@@ -1,19 +1,22 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaCheck, FaPlay, FaClock, FaExclamationTriangle, FaFilter, FaFile, FaFileAlt, FaLink, FaDownload, FaEye, FaVideo } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaCheck, FaPlay, FaClock, FaExclamationTriangle, FaFilter, FaFile, FaFileAlt, FaLink, FaDownload, FaEye, FaVideo, FaStickyNote } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import useTaskStore from '../stores/useTaskStore';
 import useDocumentStore from '../stores/useDocumentStore';
 import useVideoStore from '../stores/useVideoStore';
+import useNoteStore from '../stores/useNoteStore';
 import useAuthStore from '../stores/useAuthStore';
 import { Task, TaskStatus, TaskPriority } from '../services/taskService';
 import { Document, documentService } from '../services/documentService';
+import { Note } from '../services/noteService';
 import { Video } from '../services/videoService';
 
 const Tasks = () => {
   const { token } = useAuthStore();
   const { tasks, isLoading, error, fetchAllTasks, addTask, updateTask, deleteTask } = useTaskStore();
   const { documents, fetchAllDocuments } = useDocumentStore();
-  const { videos, fetchAllVideos, fetchVideosForTask } = useVideoStore();
+  const { videos, fetchAllVideos } = useVideoStore();
+  const { notes, fetchAllNotes } = useNoteStore();
   
   const [showModal, setShowModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -26,8 +29,9 @@ const Tasks = () => {
   const [filter, setFilter] = useState<{status?: TaskStatus, priority?: TaskPriority}>({});
   const [taskDocuments, setTaskDocuments] = useState<Record<number, Document[]>>({});
   const [taskVideos, setTaskVideos] = useState<Record<number, Video[]>>({});
+  const [taskNotes, setTaskNotes] = useState<Record<number, Note[]>>({});
   const [expandedTaskId, setExpandedTaskId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'documents' | 'videos'>('documents');
+  const [activeTab, setActiveTab] = useState<'documents' | 'videos' | 'notes'>('documents');
   const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
   
   useEffect(() => {
@@ -35,8 +39,9 @@ const Tasks = () => {
       fetchAllTasks();
       fetchAllDocuments(token);
       fetchAllVideos(token);
+      fetchAllNotes(token);
     }
-  }, [fetchAllTasks, fetchAllDocuments, fetchAllVideos, token]);
+  }, [fetchAllTasks, fetchAllDocuments, fetchAllVideos, fetchAllNotes, token]);
   
   useEffect(() => {
     // Map documents to tasks
@@ -69,6 +74,22 @@ const Tasks = () => {
     
     setTaskVideos(videoMap);
   }, [videos, tasks]);
+  
+  useEffect(() => {
+    // Map notes to tasks
+    const noteMap: Record<number, Note[]> = {};
+    
+    if (notes.length > 0 && tasks.length > 0) {
+      tasks.forEach(task => {
+        if (task.id) {
+          const taskId = task.id as number;
+          noteMap[taskId] = notes.filter(note => note.taskIds && note.taskIds.includes(taskId));
+        }
+      });
+    }
+    
+    setTaskNotes(noteMap);
+  }, [notes, tasks]);
   
   const handleOpenModal = (taskToEdit: Task | null = null) => {
     if (taskToEdit) {
@@ -299,6 +320,9 @@ const Tasks = () => {
           <Link to="/videos" className="videos-link-button">
             <FaVideo /> Videos
           </Link>
+          <Link to="/notes" className="notes-link-button">
+            <FaStickyNote /> Notes
+          </Link>
           <button className="create-button" onClick={() => handleOpenModal()}>
             <FaPlus /> New Task
           </button>
@@ -365,6 +389,12 @@ const Tasks = () => {
                         onClick={() => setActiveTab('videos')}
                       >
                         <FaVideo /> Videos {taskVideos[task.id] ? `(${taskVideos[task.id].length})` : '(0)'}
+                      </button>
+                      <button 
+                        className={`tab-button ${activeTab === 'notes' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('notes')}
+                      >
+                        <FaStickyNote /> Notes {taskNotes[task.id] ? `(${taskNotes[task.id].length})` : '(0)'}
                       </button>
                     </div>
                     
@@ -440,6 +470,39 @@ const Tasks = () => {
                             No videos associated with this task.
                             <Link to="/videos" className="add-video-link">
                               <FaLink /> Add videos
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {activeTab === 'notes' && (
+                      <div className="task-notes">
+                        {taskNotes[task.id] && taskNotes[task.id].length > 0 ? (
+                          <ul className="notes-list">
+                            {taskNotes[task.id].map(note => (
+                              <li key={note.id} className="note-item-small">
+                                <div className="note-item-content">
+                                  <FaStickyNote className="note-icon" />
+                                  <span>{note.title}</span>
+                                </div>
+                                <div className="note-item-actions">
+                                  <Link 
+                                    to={`/notes`}
+                                    className="icon-button small view"
+                                    title="Go to Notes"
+                                  >
+                                    <FaEye />
+                                  </Link>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="no-notes">
+                            No notes associated with this task.
+                            <Link to="/notes" className="add-note-link">
+                              <FaLink /> Add notes
                             </Link>
                           </div>
                         )}

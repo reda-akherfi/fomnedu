@@ -62,6 +62,7 @@ const Videos = () => {
       setUrlError('URL is required');
       return;
     }
+    if (!token) return;
     
     // Validate YouTube URL
     const youtubeId = videoService.getYouTubeVideoId(url);
@@ -109,6 +110,7 @@ const Videos = () => {
   
   // Delete a video
   const handleDeleteVideo = async (id: number) => {
+    if (!token) return;
     if (window.confirm(`Are you sure you want to delete this video?`)) {
       await deleteVideo(token, id);
     }
