@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { FaPlus, FaTrash, FaFolder, FaPlay, FaEdit, FaExclamationTriangle, FaCheck } from 'react-icons/fa';
 import useModuleStore, { Module as ModuleType } from '../stores/useModuleStore';
 import useTaskStore from '../stores/useTaskStore';
@@ -26,39 +26,105 @@ const Module = () => {
   const [selectedTaskIds, setSelectedTaskIds] = useState<number[]>([]);
   const [availableTasks, setAvailableTasks] = useState<Task[]>([]);
   const [moduleTasksMap, setModuleTasksMap] = useState<Record<string | number, Task[]>>({});
+  const [isLoadingModuleTasks, setIsLoadingModuleTasks] = useState(false);
   
+  // Track loaded task IDs to prevent infinite network requests
+  const loadedTaskIdsRef = useRef<number[]>([]);
+  // Track initial loading state
+  const initialLoadRef = useRef(true);
+  
+  // Only fetch modules and tasks once on initial load
   useEffect(() => {
     fetchModules();
     fetchAllTasks();
-  }, [fetchModules, fetchAllTasks, token]);
+  }, [fetchModules, fetchAllTasks]);
   
-  // Load tasks details for modules
+  // Update initialLoadRef when loading completes
   useEffect(() => {
-    const loadModuleTasks = async () => {
-      const tasksMap: Record<string | number, Task[]> = {};
+    if (!isLoading && !tasksLoading && initialLoadRef.current) {
+      initialLoadRef.current = false;
+    }
+  }, [isLoading, tasksLoading]);
+  
+  // Create a stable array of module taskIds to prevent unnecessary rerenders
+  const getAllTaskIds = useCallback(() => {
+    const allTaskIds: number[] = [];
+    modules.forEach(module => {
+      if (module.taskIds && module.taskIds.length > 0) {
+        module.taskIds.forEach(id => {
+          if (!allTaskIds.includes(id)) {
+            allTaskIds.push(id);
+          }
+        });
+      }
+    });
+    return allTaskIds;
+  }, [modules]);
+  
+  // Load module tasks only when needed
+  useEffect(() => {
+    // Skip if still in initial loading, or if already loading tasks
+    if (initialLoadRef.current || isLoadingModuleTasks || modules.length === 0 || tasksLoading) {
+      return;
+    }
+    
+    const loadTasks = async () => {
+      const allTaskIds = getAllTaskIds();
       
-      for (const module of modules) {
-        if (module.taskIds && module.taskIds.length > 0) {
-          const moduleTasks = await fetchTasksByBatchIds(module.taskIds);
-          tasksMap[module.id] = moduleTasks;
-        } else {
-          tasksMap[module.id] = [];
-        }
+      // Skip if there are no task IDs or all task IDs have already been loaded
+      if (allTaskIds.length === 0) {
+        return;
       }
       
-      setModuleTasksMap(tasksMap);
+      // Check if we need to load any new task IDs that weren't previously loaded
+      const newTaskIds = allTaskIds.filter(id => !loadedTaskIdsRef.current.includes(id));
+      if (newTaskIds.length === 0) {
+        return; // No new tasks to load
+      }
+      
+      setIsLoadingModuleTasks(true);
+      
+      try {
+        const allModuleTasks = await fetchTasksByBatchIds(newTaskIds);
+        loadedTaskIdsRef.current = [...loadedTaskIdsRef.current, ...newTaskIds];
+        
+        // Create the task map for the modules
+        const tasksMap: Record<string | number, Task[]> = {};
+        modules.forEach(module => {
+          if (module.taskIds && module.taskIds.length > 0) {
+            // Get tasks for this module from both newly loaded tasks and any previously loaded tasks
+            tasksMap[module.id] = tasks.concat(allModuleTasks).filter(task => 
+              task.id !== undefined && module.taskIds.includes(task.id as number)
+            );
+          } else {
+            tasksMap[module.id] = [];
+          }
+        });
+        
+        setModuleTasksMap(tasksMap);
+      } catch (error) {
+        console.error('Error loading module tasks:', error);
+      } finally {
+        setIsLoadingModuleTasks(false);
+      }
     };
     
-    if (modules.length > 0 && !tasksLoading) {
-      loadModuleTasks();
-    }
-  }, [modules, fetchTasksByBatchIds, tasksLoading]);
+    loadTasks();
+  }, [modules, tasks, tasksLoading, isLoadingModuleTasks, fetchTasksByBatchIds, getAllTaskIds, initialLoadRef]);
   
+  // Update available tasks for the form
   useEffect(() => {
     if (!tasksLoading) {
       setAvailableTasks(tasks);
     }
   }, [tasks, tasksLoading]);
+  
+  // Reset loaded tasks when modules change (e.g., after add/delete)
+  useEffect(() => {
+    if (modules.length === 0) {
+      loadedTaskIdsRef.current = [];
+    }
+  }, [modules.length]);
 
   const handleOpenModal = (moduleToEdit: ModuleType | null = null) => {
     if (moduleToEdit) {
@@ -99,11 +165,16 @@ const Module = () => {
     setModuleDescription('');
     setSelectedTaskIds([]);
     setShowModal(false);
+    
+    // Reset loaded task IDs to force reloading tasks after module changes
+    loadedTaskIdsRef.current = [];
   };
 
   const handleDeleteModule = async (id: number | string, name: string) => {
     if (window.confirm(`Are you sure you want to delete the module "${name}" and all associated documents and notes?`)) {
       await deleteModule(id);
+      // Reset loaded task IDs after delete
+      loadedTaskIdsRef.current = [];
     }
   };
   
@@ -127,7 +198,8 @@ const Module = () => {
     });
   };
 
-  if ((isLoading && modules.length === 0) || tasksLoading) {
+  // Only show the loading state on initial load, not on subsequent data refreshes
+  if (initialLoadRef.current) {
     return (
       <div className="page-container">
         <div className="loading-state">Loading modules...</div>
@@ -158,6 +230,11 @@ const Module = () => {
         </div>
       ) : (
         <div className="module-grid">
+          {isLoadingModuleTasks && (
+            <div className="loading-overlay">
+              <div className="loading-spinner"></div>
+            </div>
+          )}
           {modules.map(module => {
             const moduleTasks = moduleTasksMap[module.id] || [];
             
