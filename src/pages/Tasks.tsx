@@ -155,12 +155,20 @@ const Tasks = () => {
         <h1>Tasks</h1>
         <div className="header-actions">
           <div className="filter-controls">
-            <button className="filter-button" onClick={() => setFilter({})}>
-              <FaFilter /> All
+            <button 
+              className={`filter-button ${Object.keys(filter).length === 0 ? 'active' : ''}`} 
+              onClick={() => setFilter({})}
+            >
+              <FaFilter /> All Tasks
             </button>
             <div className="dropdown">
-              <button className="filter-button">Status</button>
+              <button className="filter-button">
+                Status: {filter.status ? filter.status.replace('_', ' ') : 'All'}
+              </button>
               <div className="dropdown-content">
+                <button onClick={() => setFilter(f => ({ ...f, status: undefined }))}>
+                  All Statuses
+                </button>
                 <button onClick={() => setFilter(f => ({ ...f, status: TaskStatus.PENDING }))}>
                   Pending
                 </button>
@@ -173,8 +181,13 @@ const Tasks = () => {
               </div>
             </div>
             <div className="dropdown">
-              <button className="filter-button">Priority</button>
+              <button className="filter-button">
+                Priority: {filter.priority ? filter.priority : 'All'}
+              </button>
               <div className="dropdown-content">
+                <button onClick={() => setFilter(f => ({ ...f, priority: undefined }))}>
+                  All Priorities
+                </button>
                 <button onClick={() => setFilter(f => ({ ...f, priority: TaskPriority.HIGH }))}>
                   High
                 </button>
