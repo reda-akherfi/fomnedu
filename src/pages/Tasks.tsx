@@ -1,16 +1,19 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaCheck, FaPlay, FaClock, FaExclamationTriangle, FaFilter, FaFile, FaFileAlt, FaLink, FaDownload, FaEye } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaCheck, FaPlay, FaClock, FaExclamationTriangle, FaFilter, FaFile, FaFileAlt, FaLink, FaDownload, FaEye, FaVideo } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import useTaskStore from '../stores/useTaskStore';
 import useDocumentStore from '../stores/useDocumentStore';
+import useVideoStore from '../stores/useVideoStore';
 import useAuthStore from '../stores/useAuthStore';
 import { Task, TaskStatus, TaskPriority } from '../services/taskService';
 import { Document, documentService } from '../services/documentService';
+import { Video } from '../services/videoService';
 
 const Tasks = () => {
   const { token } = useAuthStore();
   const { tasks, isLoading, error, fetchAllTasks, addTask, updateTask, deleteTask } = useTaskStore();
-  const { documents, fetchAllDocuments, fetchDocumentsForTask } = useDocumentStore();
+  const { documents, fetchAllDocuments } = useDocumentStore();
+  const { videos, fetchAllVideos, fetchVideosForTask } = useVideoStore();
   
   const [showModal, setShowModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -22,15 +25,18 @@ const Tasks = () => {
   const [dueDate, setDueDate] = useState('');
   const [filter, setFilter] = useState<{status?: TaskStatus, priority?: TaskPriority}>({});
   const [taskDocuments, setTaskDocuments] = useState<Record<number, Document[]>>({});
+  const [taskVideos, setTaskVideos] = useState<Record<number, Video[]>>({});
   const [expandedTaskId, setExpandedTaskId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<'documents' | 'videos'>('documents');
   const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
   
   useEffect(() => {
     if (token) {
       fetchAllTasks();
       fetchAllDocuments(token);
+      fetchAllVideos(token);
     }
-  }, [fetchAllTasks, fetchAllDocuments, token]);
+  }, [fetchAllTasks, fetchAllDocuments, fetchAllVideos, token]);
   
   useEffect(() => {
     // Map documents to tasks
@@ -47,6 +53,22 @@ const Tasks = () => {
     
     setTaskDocuments(docMap);
   }, [documents, tasks]);
+  
+  useEffect(() => {
+    // Map videos to tasks
+    const videoMap: Record<number, Video[]> = {};
+    
+    if (videos.length > 0 && tasks.length > 0) {
+      tasks.forEach(task => {
+        if (task.id) {
+          const taskId = task.id as number;
+          videoMap[taskId] = videos.filter(video => video.taskIds && video.taskIds.includes(taskId));
+        }
+      });
+    }
+    
+    setTaskVideos(videoMap);
+  }, [videos, tasks]);
   
   const handleOpenModal = (taskToEdit: Task | null = null) => {
     if (taskToEdit) {
@@ -169,7 +191,12 @@ const Tasks = () => {
   
   const toggleExpandTask = (taskId: number | undefined) => {
     if (!taskId) return;
-    setExpandedTaskId(expandedTaskId === taskId ? null : taskId);
+    if (expandedTaskId === taskId) {
+      setExpandedTaskId(null);
+    } else {
+      setExpandedTaskId(taskId);
+      setActiveTab('documents');
+    }
   };
   
   const handleDownloadDocument = async (doc: Document) => {
@@ -269,6 +296,9 @@ const Tasks = () => {
           <Link to="/documents" className="documents-link-button">
             <FaFile /> Documents
           </Link>
+          <Link to="/videos" className="videos-link-button">
+            <FaVideo /> Videos
+          </Link>
           <button className="create-button" onClick={() => handleOpenModal()}>
             <FaPlus /> New Task
           </button>
@@ -298,7 +328,7 @@ const Tasks = () => {
                     <button
                       className="icon-button info"
                       onClick={() => toggleExpandTask(task.id)}
-                      title="View Documents"
+                      title="View Details"
                     >
                       <FaFileAlt />
                     </button>
@@ -322,46 +352,97 @@ const Tasks = () => {
                 )}
                 
                 {expandedTaskId === task.id && task.id && (
-                  <div className="task-documents">
-                    <h4>Associated Documents</h4>
-                    {taskDocuments[task.id] && taskDocuments[task.id].length > 0 ? (
-                      <ul className="documents-list">
-                        {taskDocuments[task.id].map(doc => (
-                          <li key={doc.id} className="document-item-small">
-                            <div className="document-item-content">
-                              <FaFileAlt className="document-icon" />
-                              <span>{doc.name}</span>
-                            </div>
-                            <div className="document-item-actions">
-                              <button 
-                                onClick={() => handleDownloadDocument(doc)}
-                                className="icon-button small download"
-                                title="Download"
-                                disabled={downloadingIds.has(doc.id as string)}
-                              >
-                                {downloadingIds.has(doc.id as string) ? (
-                                  <span className="loading-spinner-mini"></span>
-                                ) : (
-                                  <FaDownload />
-                                )}
-                              </button>
-                              <button 
-                                onClick={() => handleOpenDocument(doc)}
-                                className="icon-button small view"
-                                title="View"
-                              >
-                                <FaEye />
-                              </button>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <div className="no-documents">
-                        No documents associated with this task.
-                        <Link to="/documents" className="add-document-link">
-                          <FaLink /> Upload documents
-                        </Link>
+                  <div className="task-details">
+                    <div className="task-tabs">
+                      <button 
+                        className={`tab-button ${activeTab === 'documents' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('documents')}
+                      >
+                        <FaFile /> Documents {taskDocuments[task.id] ? `(${taskDocuments[task.id].length})` : '(0)'}
+                      </button>
+                      <button 
+                        className={`tab-button ${activeTab === 'videos' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('videos')}
+                      >
+                        <FaVideo /> Videos {taskVideos[task.id] ? `(${taskVideos[task.id].length})` : '(0)'}
+                      </button>
+                    </div>
+                    
+                    {activeTab === 'documents' && (
+                      <div className="task-documents">
+                        {taskDocuments[task.id] && taskDocuments[task.id].length > 0 ? (
+                          <ul className="documents-list">
+                            {taskDocuments[task.id].map(doc => (
+                              <li key={doc.id} className="document-item-small">
+                                <div className="document-item-content">
+                                  <FaFileAlt className="document-icon" />
+                                  <span>{doc.name}</span>
+                                </div>
+                                <div className="document-item-actions">
+                                  <button 
+                                    onClick={() => handleDownloadDocument(doc)}
+                                    className="icon-button small download"
+                                    title="Download"
+                                    disabled={downloadingIds.has(doc.id as string)}
+                                  >
+                                    {downloadingIds.has(doc.id as string) ? (
+                                      <span className="loading-spinner-mini"></span>
+                                    ) : (
+                                      <FaDownload />
+                                    )}
+                                  </button>
+                                  <button 
+                                    onClick={() => handleOpenDocument(doc)}
+                                    className="icon-button small view"
+                                    title="View"
+                                  >
+                                    <FaEye />
+                                  </button>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="no-documents">
+                            No documents associated with this task.
+                            <Link to="/documents" className="add-document-link">
+                              <FaLink /> Upload documents
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {activeTab === 'videos' && (
+                      <div className="task-videos">
+                        {taskVideos[task.id] && taskVideos[task.id].length > 0 ? (
+                          <ul className="videos-list">
+                            {taskVideos[task.id].map(video => (
+                              <li key={video.id} className="video-item-small">
+                                <div className="video-item-content">
+                                  <FaVideo className="video-icon" />
+                                  <span>{video.title}</span>
+                                </div>
+                                <div className="video-item-actions">
+                                  <Link 
+                                    to={`/videos`}
+                                    className="icon-button small view"
+                                    title="Go to Videos"
+                                  >
+                                    <FaEye />
+                                  </Link>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="no-videos">
+                            No videos associated with this task.
+                            <Link to="/videos" className="add-video-link">
+                              <FaLink /> Add videos
+                            </Link>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

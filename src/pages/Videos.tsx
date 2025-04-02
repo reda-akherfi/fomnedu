@@ -1,9 +1,19 @@
-import { useState } from 'react';
-import { FaFolder, FaVideo, FaPlus, FaTrash, FaLink, FaEdit, FaExternalLinkAlt } from 'react-icons/fa';
+import { useState, useEffect } from 'react';
+import { FaFolder, FaVideo, FaPlus, FaTrash, FaLink, FaEdit, FaExternalLinkAlt, FaExclamationTriangle, FaFilter, FaPlay, FaYoutube } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 import useModuleStore, { Video } from '../stores/useModuleStore';
+import useVideoStore from '../stores/useVideoStore';
+import useTaskStore from '../stores/useTaskStore';
+import useAuthStore from '../stores/useAuthStore';
+import { videoService } from '../services/videoService';
+import { Task } from '../services/taskService';
 
 const Videos = () => {
   const { modules, videos, addVideo, updateVideo, deleteVideo } = useModuleStore();
+  const { token } = useAuthStore();
+  const { isLoading, error, fetchAllVideos, addVideo: videoStoreAddVideo, updateVideo: videoStoreUpdateVideo, deleteVideo: videoStoreDeleteVideo } = useVideoStore();
+  const { tasks, fetchAllTasks } = useTaskStore();
+  
   const [showModal, setShowModal] = useState(false);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [videoTitle, setVideoTitle] = useState('');
@@ -17,17 +27,44 @@ const Videos = () => {
   const [editUrl, setEditUrl] = useState('');
   const [editThumbnail, setEditThumbnail] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [selectedTaskIds, setSelectedTaskIds] = useState<number[]>([]);
+  const [urlError, setUrlError] = useState<string | null>(null);
+  const [filterTaskId, setFilterTaskId] = useState<number | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
-  const handleAddVideo = () => {
+  useEffect(() => {
+    if (token) {
+      fetchAllVideos(token);
+      fetchAllTasks();
+    }
+  }, [token, fetchAllVideos, fetchAllTasks]);
+
+  const handleAddVideo = async () => {
     if (!selectedModule || !videoTitle.trim() || !videoUrl.trim()) return;
     
-    addVideo(
-      selectedModule,
-      videoTitle.trim(),
-      videoUrl.trim(),
-      videoThumbnail.trim() || undefined,
-      videoDescription.trim() || undefined
-    );
+    const videoId = videoService.getYouTubeVideoId(videoUrl);
+    if (!videoId) {
+      setUrlError('Please enter a valid YouTube URL');
+      return;
+    }
+    
+    if (editingVideoId) {
+      await videoStoreUpdateVideo(
+        token,
+        editingVideoId,
+        videoTitle.trim(),
+        videoUrl.trim(),
+        selectedTaskIds.length > 0 ? selectedTaskIds : undefined
+      );
+    } else {
+      await videoStoreAddVideo(
+        token,
+        selectedModule,
+        videoTitle.trim(),
+        videoUrl.trim(),
+        selectedTaskIds.length > 0 ? selectedTaskIds : undefined
+      );
+    }
     
     resetForm();
     setShowModal(false);
@@ -39,6 +76,7 @@ const Videos = () => {
     setEditUrl(video.url);
     setEditThumbnail(video.thumbnailUrl || '');
     setEditDescription(video.description || '');
+    setSelectedTaskIds(video.taskIds || []);
   };
 
   const saveVideoEdit = () => {
@@ -63,6 +101,7 @@ const Videos = () => {
     setEditUrl('');
     setEditThumbnail('');
     setEditDescription('');
+    setSelectedTaskIds([]);
   };
 
   const resetForm = () => {
@@ -70,6 +109,8 @@ const Videos = () => {
     setVideoUrl('');
     setVideoThumbnail('');
     setVideoDescription('');
+    setSelectedTaskIds([]);
+    setUrlError(null);
   };
 
   const openVideoModal = (moduleId: string) => {
@@ -92,206 +133,286 @@ const Videos = () => {
     return module ? module.name : 'Module inconnu';
   };
 
+  const handleTaskToggle = (taskId: number) => {
+    setSelectedTaskIds(prev => 
+      prev.includes(taskId)
+        ? prev.filter(id => id !== taskId)
+        : [...prev, taskId]
+    );
+  };
+
+  const getYouTubeThumbnail = (url: string) => {
+    const videoId = videoService.getYouTubeVideoId(url);
+    return videoId ? videoService.getYouTubeThumbnailUrl(videoId) : '';
+  };
+
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'Unknown';
+    
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getAssociatedTasks = (video: Video) => {
+    return tasks.filter(task => video.taskIds.includes(task.id as number));
+  };
+
+  const openYouTubeVideo = (url: string) => {
+    window.open(url, '_blank');
+  };
+
+  const handlePlayVideo = (video: Video) => {
+    setSelectedVideo(video);
+  };
+
+  const filteredVideos = filterTaskId
+    ? videos.filter(video => video.taskIds.includes(filterTaskId))
+    : videos;
+
+  if (isLoading && videos.length === 0) {
+    return (
+      <div className="page-container">
+        <div className="loading-state">Loading videos...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="page-container">
-      <h1>Bibliothèque de Vidéos</h1>
-      
-      {modules.length === 0 ? (
-        <div className="empty-state">
-          <FaFolder size={48} />
-          <p>Vous n'avez pas encore créé de modules</p>
-          <p>Allez dans la section "Module" pour commencer</p>
-        </div>
-      ) : (
-        <div className="videos-container">
-          {modules.map(module => (
-            <div key={module.id} className="module-section">
-              <div className="module-section-header">
-                <h2>
-                  <FaFolder /> {module.name}
-                </h2>
-                <button className="small-button" onClick={() => openVideoModal(module.id)}>
-                  <FaPlus /> Ajouter une vidéo
+      <div className="page-header">
+        <h1>Videos</h1>
+        <div className="header-actions">
+          <div className="filter-controls">
+            <button 
+              className={`filter-button ${filterTaskId === null ? 'active' : ''}`} 
+              onClick={() => setFilterTaskId(null)}
+            >
+              <FaFilter /> All Videos
+            </button>
+            {tasks.length > 0 && (
+              <div className="dropdown">
+                <button className="filter-button">
+                  Filter by Task
                 </button>
+                <div className="dropdown-content">
+                  {tasks.map(task => (
+                    <button
+                      key={task.id}
+                      onClick={() => setFilterTaskId(task.id as number)}
+                    >
+                      {task.title}
+                    </button>
+                  ))}
+                </div>
               </div>
-              
-              <div className="videos-grid">
-                {!videosByModule[module.id] || videosByModule[module.id].length === 0 ? (
-                  <p className="empty-folder">Ce module ne contient pas encore de vidéos.</p>
-                ) : (
-                  videosByModule[module.id].map(video => (
-                    <div key={video.id} className="video-card">
-                      {editingVideoId === video.id ? (
-                        // Mode édition
-                        <div className="video-edit-form">
-                          <div className="form-group">
-                            <label>Titre</label>
-                            <input
-                              type="text"
-                              value={editTitle}
-                              onChange={(e) => setEditTitle(e.target.value)}
-                              placeholder="Titre de la vidéo"
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label>URL</label>
-                            <input
-                              type="url"
-                              value={editUrl}
-                              onChange={(e) => setEditUrl(e.target.value)}
-                              placeholder="https://..."
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label>URL de la miniature (optionnel)</label>
-                            <input
-                              type="url"
-                              value={editThumbnail}
-                              onChange={(e) => setEditThumbnail(e.target.value)}
-                              placeholder="https://..."
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label>Description</label>
-                            <textarea
-                              value={editDescription}
-                              onChange={(e) => setEditDescription(e.target.value)}
-                              rows={3}
-                            />
-                          </div>
-                          <div className="video-edit-actions">
-                            <button onClick={saveVideoEdit}>Enregistrer</button>
-                            <button className="secondary" onClick={cancelEditingVideo}>Annuler</button>
-                          </div>
+            )}
+          </div>
+          <Link to="/tasks" className="tasks-link-button">
+            <FaLink /> Tasks
+          </Link>
+          <button className="create-button" onClick={() => openVideoModal(selectedModule || '')}>
+            <FaPlus /> Add Video
+          </button>
+        </div>
+      </div>
+      
+      {error && (
+        <div className="error-message">
+          <FaExclamationTriangle /> {error}
+        </div>
+      )}
+      
+      {selectedVideo && (
+        <div className="video-player-container">
+          <div className="video-player-header">
+            <h2>{selectedVideo.title}</h2>
+            <button className="close-player-btn" onClick={() => setSelectedVideo(null)}>
+              <FaTrash />
+            </button>
+          </div>
+          <div className="video-player-frame">
+            <iframe
+              width="100%"
+              height="100%"
+              src={`https://www.youtube.com/embed/${videoService.getYouTubeVideoId(selectedVideo.url)}?autoplay=1`}
+              title={selectedVideo.title}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
+        </div>
+      )}
+      
+      {!selectedVideo && (
+        <div className="videos-grid-container">
+          {filteredVideos.length === 0 ? (
+            <div className="empty-state">
+              <FaYoutube size={48} />
+              <p>No videos found</p>
+              <button onClick={() => openVideoModal(selectedModule || '')}>Add your first video</button>
+            </div>
+          ) : (
+            <div className="videos-grid">
+              {filteredVideos.map(video => (
+                <div key={video.id} className="video-card">
+                  <div className="video-thumbnail" onClick={() => handlePlayVideo(video)}>
+                    <img 
+                      src={getYouTubeThumbnail(video.url)} 
+                      alt={video.title} 
+                    />
+                    <div className="video-play-btn">
+                      <FaPlay />
+                    </div>
+                  </div>
+                  <div className="video-info">
+                    <h3>{video.title}</h3>
+                    <div className="video-dates">
+                      Added on {formatDate(video.createdAt)}
+                    </div>
+                    <div className="video-tasks">
+                      {getAssociatedTasks(video).length > 0 ? (
+                        <div className="task-chips">
+                          {getAssociatedTasks(video).map(task => (
+                            <span key={task.id} className="task-chip-small">
+                              {task.title}
+                            </span>
+                          ))}
                         </div>
                       ) : (
-                        // Mode affichage
-                        <>
-                          <div className="video-thumbnail">
-                            <img 
-                              src={video.thumbnailUrl || 'https://via.placeholder.com/320x180.png?text=Video'} 
-                              alt={video.title}
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/320x180.png?text=Image+Error';
-                              }}
-                            />
-                            <a 
-                              href={video.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="video-play-btn"
-                            >
-                              <FaExternalLinkAlt />
-                            </a>
-                          </div>
-                          <div className="video-info">
-                            <h3>{video.title}</h3>
-                            {video.description && (
-                              <p className="video-description">{video.description}</p>
-                            )}
-                            <div className="video-footer">
-                              <span className="video-module">{getModuleName(video.moduleId)}</span>
-                              <span className="video-date">
-                                {new Date(video.createdAt).toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="video-actions">
-                            <button 
-                              className="icon-button edit" 
-                              onClick={() => startEditingVideo(video)}
-                            >
-                              <FaEdit />
-                            </button>
-                            <button 
-                              className="icon-button delete" 
-                              onClick={() => {
-                                if(window.confirm(`Êtes-vous sûr de vouloir supprimer la vidéo "${video.title}" ?`)) {
-                                  deleteVideo(video.id);
-                                }
-                              }}
-                            >
-                              <FaTrash />
-                            </button>
-                          </div>
-                        </>
+                        <span className="no-tasks">No tasks associated</span>
                       )}
                     </div>
-                  ))
-                )}
-              </div>
+                  </div>
+                  <div className="video-actions">
+                    <button 
+                      className="icon-button play" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlayVideo(video);
+                      }}
+                      title="Play"
+                    >
+                      <FaPlay />
+                    </button>
+                    <button 
+                      className="icon-button edit" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startEditingVideo(video);
+                      }}
+                      title="Edit"
+                    >
+                      <FaEdit />
+                    </button>
+                    <button 
+                      className="icon-button delete" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm(`Êtes-vous sûr de vouloir supprimer la vidéo "${video.title}" ?`)) {
+                          videoStoreDeleteVideo(token, video.id);
+                        }
+                      }}
+                      title="Delete"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
       )}
       
       {showModal && (
         <div className="modal-backdrop">
           <div className="modal-content">
-            <h2>Ajouter une vidéo</h2>
-            
-            <div className="form-group">
-              <label htmlFor="videoTitle">Titre de la vidéo *</label>
-              <input
-                id="videoTitle"
-                type="text"
-                value={videoTitle}
-                onChange={(e) => setVideoTitle(e.target.value)}
-                required
-              />
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="videoUrl">URL de la vidéo *</label>
-              <input
-                id="videoUrl"
-                type="url"
-                value={videoUrl}
-                onChange={(e) => setVideoUrl(e.target.value)}
-                placeholder="https://www.youtube.com/watch?v=..."
-                required
-              />
-              <small>Les URL YouTube seront automatiquement associées à leurs miniatures.</small>
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="videoThumbnail">URL de la miniature (optionnel)</label>
-              <input
-                id="videoThumbnail"
-                type="url"
-                value={videoThumbnail}
-                onChange={(e) => setVideoThumbnail(e.target.value)}
-                placeholder="https://..."
-              />
-              <small>Laissez vide pour utiliser la miniature par défaut de YouTube.</small>
-            </div>
-            
-            <div className="form-group">
-              <label htmlFor="videoDescription">Description (optionnel)</label>
-              <textarea
-                id="videoDescription"
-                value={videoDescription}
-                onChange={(e) => setVideoDescription(e.target.value)}
-                placeholder="Description de la vidéo..."
-                rows={3}
-              />
-            </div>
-            
-            <div className="modal-actions">
-              <button 
-                onClick={handleAddVideo}
-                disabled={!videoTitle.trim() || !videoUrl.trim()}
-              >
-                Ajouter
-              </button>
-              <button 
-                type="button" 
-                className="secondary" 
-                onClick={() => setShowModal(false)}
-              >
-                Annuler
-              </button>
-            </div>
+            <h2>{editingVideoId ? 'Edit Video' : 'Add Video'}</h2>
+            <form onSubmit={handleAddVideo}>
+              <div className="form-group">
+                <label htmlFor="videoTitle">Title *</label>
+                <input
+                  id="videoTitle"
+                  type="text"
+                  value={videoTitle}
+                  onChange={(e) => setVideoTitle(e.target.value)}
+                  placeholder="Video title"
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="videoUrl">YouTube URL *</label>
+                <input
+                  id="videoUrl"
+                  type="text"
+                  value={videoUrl}
+                  onChange={(e) => {
+                    setVideoUrl(e.target.value);
+                    setUrlError(null); // Clear error when user modifies URL
+                  }}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  required
+                />
+                {urlError && <div className="error-text">{urlError}</div>}
+                {videoUrl && videoService.getYouTubeVideoId(videoUrl) && (
+                  <div className="video-preview-container">
+                    <img 
+                      src={getYouTubeThumbnail(videoUrl)}
+                      alt="Video thumbnail"
+                      className="video-preview-thumbnail"
+                    />
+                  </div>
+                )}
+              </div>
+              
+              <div className="form-group">
+                <label>Associate with Tasks (optional)</label>
+                {tasks.length === 0 ? (
+                  <div className="no-tasks-message">
+                    No tasks available. <a href="/tasks">Create some tasks</a> first.
+                  </div>
+                ) : (
+                  <div className="tasks-selection">
+                    {tasks.map(task => (
+                      <div key={task.id} className="task-checkbox">
+                        <label className="checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={selectedTaskIds.includes(task.id as number)}
+                            onChange={() => handleTaskToggle(task.id as number)}
+                          />
+                          <span className="checkbox-custom"></span>
+                          {task.title}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              <div className="modal-actions">
+                <button 
+                  type="submit"
+                  disabled={!videoTitle.trim() || !videoUrl.trim() || isLoading}
+                >
+                  {isLoading ? 'Processing...' : editingVideoId ? 'Update Video' : 'Add Video'}
+                </button>
+                <button 
+                  type="button" 
+                  className="secondary" 
+                  onClick={() => setShowModal(false)}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
