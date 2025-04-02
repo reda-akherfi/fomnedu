@@ -415,13 +415,18 @@ button.secondary:hover {
   gap: 8px;
 }
 
+/* Icon buttons in main UI */
 .icon-button {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
+  padding: 8px;
   border-radius: 4px;
   color: #757575;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
   transition: background-color 0.2s, color 0.2s;
 }
 
@@ -437,6 +442,10 @@ button.secondary:hover {
   color: #f44336;
 }
 
+.icon-button.play:hover {
+  color: var(--primary-color);
+}
+
 .task-description {
   margin: 8px 0;
   font-size: 14px;
@@ -446,9 +455,21 @@ button.secondary:hover {
 .task-dates {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 12px;
   color: #757575;
   margin-top: 8px;
+}
+
+.task-dates .icon-button.small.play {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  color: white;
+  transition: all 0.2s;
 }
 
 .no-tasks {
@@ -464,12 +485,40 @@ button.secondary:hover {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  background-color: #fff;
+  padding: 16px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 .create-button {
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.create-button:hover {
+  background-color: var(--primary-color-dark);
 }
 
 .small-button {
@@ -1064,8 +1113,7 @@ button.secondary:hover {
   margin-top: 15px;
 }
 
-/* Styles pour la session d'étude - à ajouter à la fin du fichier CSS */
-
+/* TaskSession Specific Styles */
 .session-container {
   display: flex;
   flex-direction: column;
@@ -1075,7 +1123,7 @@ button.secondary:hover {
   position: relative;
 }
 
-.loading-state {
+.session-container .loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1086,18 +1134,18 @@ button.secondary:hover {
   gap: 1rem;
 }
 
-.loading-spinner {
+.session-container .loading-spinner {
   animation: spin 1s linear infinite;
   font-size: 2rem;
   color: #4285f4;
 }
 
-.loading-spinner-small {
+.session-container .loading-spinner-small {
   animation: spin 1s linear infinite;
   font-size: 1rem;
 }
 
-.loading-spinner-mini {
+.session-container .loading-spinner-mini {
   display: inline-block;
   width: 12px;
   height: 12px;
@@ -1113,7 +1161,7 @@ button.secondary:hover {
 }
 
 /* Session Header */
-.session-header {
+.session-container .session-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1126,7 +1174,7 @@ button.secondary:hover {
   height: 70px;
 }
 
-.back-button {
+.session-container .back-button {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1140,23 +1188,23 @@ button.secondary:hover {
   transition: all 0.2s ease;
 }
 
-.back-button:hover {
+.session-container .back-button:hover {
   background-color: #e9e9e9;
 }
 
-.module-title {
+.session-container .module-title {
   font-size: 18px;
   font-weight: 600;
   color: #333;
   flex: 1;
 }
 
-.session-controls {
+.session-container .session-controls {
   display: flex;
   gap: 8px;
 }
 
-.end-session-btn {
+.session-container .end-session-btn {
   padding: 8px 16px;
   background-color: #dd4b39;
   color: white;
@@ -1167,12 +1215,12 @@ button.secondary:hover {
   transition: background-color 0.2s;
 }
 
-.end-session-btn:hover {
+.session-container .end-session-btn:hover {
   background-color: #c23321;
 }
 
 /* Timer Container */
-.timer-container {
+.session-container .timer-container {
   display: flex;
   align-items: center;
   background-color: #fff;
@@ -1182,7 +1230,7 @@ button.secondary:hover {
   position: relative;
 }
 
-.timer {
+.session-container .timer {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1192,31 +1240,31 @@ button.secondary:hover {
   min-width: 120px;
 }
 
-.timer-break {
+.session-container .timer-break {
   background-color: #e8f5e9;
   border-radius: 4px;
 }
 
-.timer-phase {
+.session-container .timer-phase {
   font-size: 12px;
   font-weight: 600;
   color: #666;
   text-transform: uppercase;
 }
 
-.timer-display {
+.session-container .timer-display {
   font-size: 24px;
   font-weight: 700;
   color: #333;
   letter-spacing: 1px;
 }
 
-.timer-controls {
+.session-container .timer-controls {
   display: flex;
   gap: 8px;
 }
 
-.timer-controls button {
+.session-container .timer-controls button {
   width: 36px;
   height: 36px;
   display: flex;
@@ -1229,16 +1277,16 @@ button.secondary:hover {
   transition: all 0.2s;
 }
 
-.timer-controls button:hover:not(:disabled) {
+.session-container .timer-controls button:hover:not(:disabled) {
   background-color: #e0e0e0;
 }
 
-.timer-controls button:disabled {
+.session-container .timer-controls button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.timer-settings {
+.session-container .timer-settings {
   position: absolute;
   top: 100%;
   right: 0;
@@ -1252,56 +1300,56 @@ button.secondary:hover {
   margin-top: 8px;
 }
 
-.timer-settings h3 {
+.session-container .timer-settings h3 {
   margin-top: 0;
   border-bottom: 1px solid #e0e0e0;
   padding-bottom: 8px;
   font-size: 16px;
 }
 
-.timer-settings-options {
+.session-container .timer-settings-options {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.timer-mode-selector {
+.session-container .timer-mode-selector {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.timer-mode-selector label {
+.session-container .timer-mode-selector label {
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
 }
 
-.custom-timer-inputs {
+.session-container .custom-timer-inputs {
   display: flex;
   gap: 16px;
 }
 
-.custom-timer-inputs > div {
+.session-container .custom-timer-inputs > div {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.custom-timer-inputs label {
+.session-container .custom-timer-inputs label {
   font-size: 14px;
   color: #666;
 }
 
-.custom-timer-inputs input {
+.session-container .custom-timer-inputs input {
   width: 80px;
   padding: 6px;
   border: 1px solid #ddd;
   border-radius: 4px;
 }
 
-.timer-error {
+.session-container .timer-error {
   color: #d32f2f;
   font-size: 14px;
   margin-top: 8px;
@@ -1310,7 +1358,7 @@ button.secondary:hover {
   border-radius: 4px;
 }
 
-.timer-settings button {
+.session-container .timer-settings button {
   margin-top: 16px;
   padding: 8px 16px;
   background-color: #4285f4;
@@ -1321,12 +1369,12 @@ button.secondary:hover {
   transition: background-color 0.2s;
 }
 
-.timer-settings button:hover {
+.session-container .timer-settings button:hover {
   background-color: #3367d6;
 }
 
 /* Sections Toolbar */
-.sections-toolbar {
+.session-container .sections-toolbar {
   padding: 12px 16px;
   background-color: #fff;
   border-bottom: 1px solid #e0e0e0;
@@ -1335,12 +1383,12 @@ button.secondary:hover {
   align-items: center;
 }
 
-.section-toggles {
+.session-container .section-toggles {
   display: flex;
   gap: 8px;
 }
 
-.section-toggle {
+.session-container .section-toggle {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1353,18 +1401,18 @@ button.secondary:hover {
   transition: all 0.2s;
 }
 
-.section-toggle:hover {
+.session-container .section-toggle:hover {
   background-color: #e0e0e0;
 }
 
-.section-toggle.active {
+.session-container .section-toggle.active {
   background-color: #e8f0fe;
   border-color: #4285f4;
   color: #4285f4;
 }
 
 /* Sections Container */
-.sections-container {
+.session-container .sections-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(45%, 1fr));
   grid-auto-rows: minmax(300px, 1fr);
@@ -1376,7 +1424,7 @@ button.secondary:hover {
 }
 
 /* Section */
-.section {
+.session-container .section {
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -1387,7 +1435,7 @@ button.secondary:hover {
   height: 100%;
 }
 
-.section.fullscreen {
+.session-container .section.fullscreen {
   position: fixed;
   top: 130px;
   left: 16px;
@@ -1398,7 +1446,7 @@ button.secondary:hover {
   z-index: 50;
 }
 
-.section-header {
+.session-container .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1407,19 +1455,19 @@ button.secondary:hover {
   border-bottom: 1px solid #e0e0e0;
 }
 
-.section-header h2 {
+.session-container .section-header h2 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
   color: #333;
 }
 
-.section-controls {
+.session-container .section-controls {
   display: flex;
   gap: 8px;
 }
 
-.section-controls button {
+.session-container .section-controls button {
   width: 30px;
   height: 30px;
   display: flex;
@@ -1432,11 +1480,11 @@ button.secondary:hover {
   transition: all 0.2s;
 }
 
-.section-controls button:hover {
+.session-container .section-controls button:hover {
   background-color: #f0f0f0;
 }
 
-.section-content {
+.session-container .section-content {
   flex: 1;
   overflow: auto;
   padding: 16px;
@@ -1445,20 +1493,20 @@ button.secondary:hover {
 }
 
 /* Documents Section */
-.documents-section {
+.session-container .documents-section {
   display: grid;
   grid-template-columns: 200px 1fr;
   gap: 16px;
   height: 100%;
 }
 
-.documents-list {
+.session-container .documents-list {
   border-right: 1px solid #e0e0e0;
   overflow-y: auto;
   padding-right: 8px;
 }
 
-.document-item {
+.session-container .document-item {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1469,27 +1517,27 @@ button.secondary:hover {
   transition: background-color 0.2s;
 }
 
-.document-item:hover {
+.session-container .document-item:hover {
   background-color: #f5f5f5;
 }
 
-.document-item.active {
+.session-container .document-item.active {
   background-color: #e8f0fe;
   font-weight: 500;
 }
 
-.document-icon {
+.session-container .document-icon {
   color: #4285f4;
 }
 
-.document-name {
+.session-container .document-name {
   font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.document-preview {
+.session-container .document-preview {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1498,26 +1546,26 @@ button.secondary:hover {
   height: 100%;
 }
 
-.document-iframe {
+.session-container .document-iframe {
   width: 100%;
   height: 100%;
   border: none;
 }
 
-.no-document-selected {
+.session-container .no-document-selected {
   color: #666;
   font-size: 16px;
 }
 
 /* Videos Section */
-.videos-section {
+.session-container .videos-section {
   display: grid;
   grid-template-rows: 1fr auto;
   gap: 16px;
   height: 100%;
 }
 
-.video-player {
+.session-container .video-player {
   height: 0;
   padding-bottom: 56.25%; /* 16:9 aspect ratio */
   position: relative;
@@ -1526,7 +1574,7 @@ button.secondary:hover {
   overflow: hidden;
 }
 
-.video-player iframe {
+.session-container .video-player iframe {
   position: absolute;
   top: 0;
   left: 0;
@@ -1535,7 +1583,7 @@ button.secondary:hover {
   border: none;
 }
 
-.no-video-selected {
+.session-container .no-video-selected {
   position: absolute;
   top: 0;
   left: 0;
@@ -1549,7 +1597,7 @@ button.secondary:hover {
   background-color: #1f1f1f;
 }
 
-.video-playlist {
+.session-container .video-playlist {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1557,7 +1605,7 @@ button.secondary:hover {
   max-height: 150px;
 }
 
-.video-item {
+.session-container .video-item {
   display: flex;
   gap: 12px;
   padding: 8px;
@@ -1566,15 +1614,15 @@ button.secondary:hover {
   transition: background-color 0.2s;
 }
 
-.video-item:hover {
+.session-container .video-item:hover {
   background-color: #f5f5f5;
 }
 
-.video-item.active {
+.session-container .video-item.active {
   background-color: #e8f0fe;
 }
 
-.video-thumbnail {
+.session-container .video-thumbnail {
   width: 120px;
   height: 68px;
   border-radius: 4px;
@@ -1582,19 +1630,19 @@ button.secondary:hover {
   flex-shrink: 0;
 }
 
-.video-thumbnail img {
+.session-container .video-thumbnail img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.video-info {
+.session-container .video-info {
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
-.video-title {
+.session-container .video-title {
   font-size: 14px;
   font-weight: 500;
   margin-bottom: 4px;
@@ -1605,23 +1653,23 @@ button.secondary:hover {
 }
 
 /* Notes Section */
-.notes-section {
+.session-container .notes-section {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-.note-editor-container {
+.session-container .note-editor-container {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-.note-title-container {
+.session-container .note-title-container {
   margin-bottom: 16px;
 }
 
-.note-title-input {
+.session-container .note-title-input {
   width: 100%;
   padding: 10px;
   font-size: 16px;
@@ -1629,12 +1677,12 @@ button.secondary:hover {
   border-radius: 4px;
 }
 
-.ql-container {
+.session-container .ql-container {
   flex: 1;
   font-size: 14px;
 }
 
-.note-status {
+.session-container .note-status {
   padding: 8px;
   font-size: 12px;
   color: #666;
@@ -1643,13 +1691,13 @@ button.secondary:hover {
 }
 
 /* Chatbot Section */
-.chatbot-section {
+.session-container .chatbot-section {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-.chatbot-messages {
+.session-container .chatbot-messages {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
@@ -1658,7 +1706,7 @@ button.secondary:hover {
   gap: 16px;
 }
 
-.chatbot-message {
+.session-container .chatbot-message {
   max-width: 80%;
   padding: 12px 16px;
   border-radius: 8px;
@@ -1666,26 +1714,26 @@ button.secondary:hover {
   line-height: 1.5;
 }
 
-.chatbot-message.user {
+.session-container .chatbot-message.user {
   align-self: flex-end;
   background-color: #e8f0fe;
   color: #1a73e8;
 }
 
-.chatbot-message.assistant {
+.session-container .chatbot-message.assistant {
   align-self: flex-start;
   background-color: #f5f5f5;
   color: #333;
 }
 
-.chatbot-input-container {
+.session-container .chatbot-input-container {
   display: flex;
   gap: 8px;
   padding: 16px;
   border-top: 1px solid #e0e0e0;
 }
 
-.chatbot-input {
+.session-container .chatbot-input {
   flex: 1;
   padding: 10px 16px;
   border: 1px solid #ddd;
@@ -1693,7 +1741,7 @@ button.secondary:hover {
   font-size: 14px;
 }
 
-.chatbot-send-button {
+.session-container .chatbot-send-button {
   padding: 0 16px;
   background-color: #1a73e8;
   color: white;
@@ -1703,17 +1751,17 @@ button.secondary:hover {
   transition: background-color 0.2s;
 }
 
-.chatbot-send-button:hover:not(:disabled) {
+.session-container .chatbot-send-button:hover:not(:disabled) {
   background-color: #1565c0;
 }
 
-.chatbot-send-button:disabled,
-.chatbot-input:disabled {
+.session-container .chatbot-send-button:disabled,
+.session-container .chatbot-input:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.chatbot-info {
+.session-container .chatbot-info {
   padding: 8px 16px;
   background-color: #f5f7fa;
   border-radius: 4px;
@@ -1723,11 +1771,45 @@ button.secondary:hover {
   margin-top: 8px;
 }
 
-.empty-message {
+.session-container .empty-message {
   color: #666;
   font-size: 14px;
   text-align: center;
   margin: 24px 0;
+}
+
+/* For mobile responsiveness - TaskSession specific */
+@media (max-width: 768px) {
+  .session-container .sections-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .session-container .documents-section, 
+  .session-container .videos-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .session-container .documents-list {
+    max-height: 150px;
+    border-right: none;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+  }
+}
+
+/* Responsive adjustments - TaskSession specific */
+@media (min-width: 1200px) {
+  .session-container .sections-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Larger screen size - TaskSession specific */
+@media (min-width: 1600px) {
+  .session-container .sections-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 /* Icon button for starting a session in task list */
@@ -1750,36 +1832,362 @@ button.secondary:hover {
   background-color: #3367d6;
 }
 
-/* For mobile responsiveness */
-@media (max-width: 768px) {
-  .sections-container {
-    grid-template-columns: 1fr;
-  }
-  
-  .documents-section, 
-  .videos-section {
-    grid-template-columns: 1fr;
-  }
-  
-  .documents-list {
-    max-height: 150px;
-    border-right: none;
-    border-bottom: 1px solid #e0e0e0;
-    padding-bottom: 8px;
-    margin-bottom: 8px;
-  }
+/* General loading spinner styles for the app */
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  font-size: 1.1rem;
+  color: #555;
 }
 
-/* Responsive adjustments */
-@media (min-width: 1200px) {
-  .sections-container {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.loading-spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #2196f3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-/* Larger screen size */
-@media (min-width: 1600px) {
-  .sections-container {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.loading-spinner-small {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #2196f3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-spinner-mini {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #2196f3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Filter controls */
+.filter-controls {
+  display: flex;
+  gap: 10px;
+  margin-right: 15px;
+}
+
+.filter-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background-color: #f5f5f5;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.filter-button.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.filter-button:hover {
+  background-color: #e8e8e8;
+}
+
+.filter-button.active:hover {
+  background-color: var(--primary-color-dark);
+}
+
+.filter-button svg {
+  margin-right: 8px;
+}
+
+/* Dropdown for filters */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  min-width: 180px;
+  background-color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  padding: 8px 0;
+  margin-top: 5px;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.dropdown-content button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-content button:hover {
+  background-color: #f5f5f5;
+}
+
+/* Link buttons for documents, videos, and notes in header */
+.documents-link-button, 
+.videos-link-button, 
+.notes-link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background-color: #f5f5f5;
+  color: #666;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+  margin-right: 10px;
+  border: 1px solid #ddd;
+}
+
+.documents-link-button:hover,
+.videos-link-button:hover,
+.notes-link-button:hover {
+  background-color: #e8e8e8;
+  color: #333;
+}
+
+.documents-link-button svg,
+.videos-link-button svg,
+.notes-link-button svg {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+/* Task tabs and sections */
+.task-details {
+  display: flex;
+  flex-direction: column;
+  margin-top: 12px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 12px;
+}
+
+.task-tabs {
+  display: flex;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  padding: 8px 15px;
+  font-size: 14px;
+  color: #777;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.tab-button.active {
+  color: #4a6fa5;
+  border-bottom-color: #4a6fa5;
+  font-weight: 500;
+}
+
+.tab-button:hover:not(.active) {
+  background-color: #f5f5f5;
+}
+
+/* Document lists in task details */
+.task-documents,
+.task-videos,
+.task-notes {
+  margin-bottom: 16px;
+}
+
+.documents-list,
+.videos-list,
+.notes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.document-item-small,
+.video-item-small,
+.note-item-small {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s ease;
+}
+
+.document-item-small:hover,
+.video-item-small:hover,
+.note-item-small:hover {
+  background-color: #f9f9f9;
+}
+
+.document-item-content,
+.video-item-content,
+.note-item-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.document-icon,
+.video-icon,
+.note-icon {
+  font-size: 16px;
+}
+
+.document-icon {
+  color: #2196f3;
+}
+
+.video-icon {
+  color: #e05260;
+}
+
+.note-icon {
+  color: #4a6fa5;
+}
+
+.document-item-actions,
+.video-item-actions,
+.note-item-actions {
+  display: flex;
+  gap: 5px;
+}
+
+/* Empty states and action links */
+.no-documents,
+.no-videos,
+.no-notes {
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #777;
+  text-align: center;
+}
+
+.add-document-link,
+.add-video-link,
+.add-note-link {
+  display: block;
+  margin-top: 10px;
+  color: #4a6fa5;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.add-document-link:hover,
+.add-video-link:hover,
+.add-note-link:hover {
+  text-decoration: underline;
+}
+
+/* Start session button in task details */
+.start-session-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: background-color 0.2s;
+}
+
+.start-session-btn:hover {
+  background-color: #3367d6;
+}
+
+/* Small action buttons */
+.icon-button.small {
+  font-size: 12px;
+  padding: 4px;
+  min-width: 24px;
+  height: 24px;
+}
+
+.icon-button.view {
+  color: #009688;
+}
+
+.icon-button.view:hover {
+  background-color: rgba(0, 150, 136, 0.1);
+}
+
+.icon-button.download {
+  color: #2196f3;
+}
+
+.icon-button.download:hover {
+  background-color: rgba(33, 150, 243, 0.1);
+}
+
+.icon-button.small.download {
+  color: #2196f3;
+}
+
+.icon-button.small.view {
+  color: #009688;
+}
+
+/* Error message */
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.error-message svg {
+  color: #f44336;
+  font-size: 18px;
 }
