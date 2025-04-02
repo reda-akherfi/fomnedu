@@ -1,12 +1,16 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaCheck, FaPlay, FaClock, FaExclamationTriangle, FaFilter } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaCheck, FaPlay, FaClock, FaExclamationTriangle, FaFilter, FaFile, FaFileAlt, FaLink } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 import useTaskStore from '../stores/useTaskStore';
+import useDocumentStore from '../stores/useDocumentStore';
 import useAuthStore from '../stores/useAuthStore';
 import { Task, TaskStatus, TaskPriority } from '../services/taskService';
+import { Document } from '../services/documentService';
 
 const Tasks = () => {
   const { token } = useAuthStore();
   const { tasks, isLoading, error, fetchAllTasks, addTask, updateTask, deleteTask } = useTaskStore();
+  const { documents, fetchAllDocuments, fetchDocumentsForTask } = useDocumentStore();
   
   const [showModal, setShowModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -17,10 +21,31 @@ const Tasks = () => {
   const [priority, setPriority] = useState<TaskPriority>(TaskPriority.MEDIUM);
   const [dueDate, setDueDate] = useState('');
   const [filter, setFilter] = useState<{status?: TaskStatus, priority?: TaskPriority}>({});
+  const [taskDocuments, setTaskDocuments] = useState<Record<number, Document[]>>({});
+  const [expandedTaskId, setExpandedTaskId] = useState<number | null>(null);
   
   useEffect(() => {
-    fetchAllTasks();
-  }, [fetchAllTasks, token]);
+    if (token) {
+      fetchAllTasks();
+      fetchAllDocuments(token);
+    }
+  }, [fetchAllTasks, fetchAllDocuments, token]);
+  
+  useEffect(() => {
+    // Map documents to tasks
+    const docMap: Record<number, Document[]> = {};
+    
+    if (documents.length > 0 && tasks.length > 0) {
+      tasks.forEach(task => {
+        if (task.id) {
+          const taskId = task.id as number;
+          docMap[taskId] = documents.filter(doc => doc.taskIds.includes(taskId));
+        }
+      });
+    }
+    
+    setTaskDocuments(docMap);
+  }, [documents, tasks]);
   
   const handleOpenModal = (taskToEdit: Task | null = null) => {
     if (taskToEdit) {
@@ -141,6 +166,11 @@ const Tasks = () => {
     return true;
   });
   
+  const toggleExpandTask = (taskId: number | undefined) => {
+    if (!taskId) return;
+    setExpandedTaskId(expandedTaskId === taskId ? null : taskId);
+  };
+  
   if (isLoading && tasks.length === 0) {
     return (
       <div className="page-container">
@@ -200,6 +230,9 @@ const Tasks = () => {
               </div>
             </div>
           </div>
+          <Link to="/documents" className="documents-link-button">
+            <FaFile /> Documents
+          </Link>
           <button className="create-button" onClick={() => handleOpenModal()}>
             <FaPlus /> New Task
           </button>
@@ -227,6 +260,13 @@ const Tasks = () => {
                   </div>
                   <div className="task-actions">
                     <button
+                      className="icon-button info"
+                      onClick={() => toggleExpandTask(task.id)}
+                      title="View Documents"
+                    >
+                      <FaFileAlt />
+                    </button>
+                    <button
                       className="icon-button edit"
                       onClick={() => handleOpenModal(task)}
                     >
@@ -243,6 +283,36 @@ const Tasks = () => {
                 
                 {task.description && (
                   <div className="task-description">{task.description}</div>
+                )}
+                
+                {expandedTaskId === task.id && task.id && (
+                  <div className="task-documents">
+                    <h4>Associated Documents</h4>
+                    {taskDocuments[task.id] && taskDocuments[task.id].length > 0 ? (
+                      <ul className="documents-list">
+                        {taskDocuments[task.id].map(doc => (
+                          <li key={doc.id} className="document-item-small">
+                            <a 
+                              href={doc.downloadUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="document-link"
+                            >
+                              <FaFileAlt className="document-icon" />
+                              <span>{doc.name}</span>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="no-documents">
+                        No documents associated with this task.
+                        <Link to="/documents" className="add-document-link">
+                          <FaLink /> Upload documents
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 )}
                 
                 <div className="task-dates">

@@ -44,11 +44,11 @@ const Sidebar = ({ isOpen, toggleSidebar }: SidebarProps) => {
           {isOpen && <span className="nav-text">Tasks</span>}
         </NavLink>
         
-        <NavLink to="/doc-repo" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+        <NavLink to="/documents" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <div className="nav-icon">
             <FaFolder />
           </div>
-          {isOpen && <span className="nav-text">Doc Repo</span>}
+          {isOpen && <span className="nav-text">Documents</span>}
         </NavLink>
         
         <NavLink to="/videos" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>

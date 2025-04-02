@@ -7,7 +7,7 @@ import Auth from './pages/Auth'
 import Home from './pages/Home'
 import Module from './pages/Module'
 import Tasks from './pages/Tasks'
-import DocRepo from './pages/DocRepo'
+import Documents from './pages/Documents'
 import Videos from './pages/Videos'
 import Chatbot from './pages/Chatbot'
 import NoteView from './pages/NoteView'
@@ -40,7 +40,7 @@ function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="/module" element={<Module />} />
                     <Route path="/tasks" element={<Tasks />} />
-                    <Route path="/doc-repo" element={<DocRepo />} />
+                    <Route path="/documents" element={<Documents />} />
                     <Route path="/videos" element={<Videos />} />
                     <Route path="/notes" element={<NoteView />} />
                     <Route path="/chatbot" element={<Chatbot />} />

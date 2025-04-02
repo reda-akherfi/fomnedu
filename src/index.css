@@ -2094,3 +2094,206 @@ button.secondary:hover {
     transform: rotate(360deg);
   }
 }
+
+/* Documents styles */
+.documents-list-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-top: 20px;
+}
+
+.documents-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.documents-table th,
+.documents-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.documents-table th {
+  background-color: #f5f5f5;
+  font-weight: 500;
+  color: #555;
+  white-space: nowrap;
+}
+
+.document-row:hover {
+  background-color: #f9f9f9;
+}
+
+.document-name-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.document-name-with-icon svg {
+  font-size: 18px;
+  color: #666;
+}
+
+.document-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-button.download {
+  color: var(--primary-color);
+}
+
+.icon-button.download:hover {
+  background-color: rgba(33, 150, 243, 0.1);
+}
+
+.file-input {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.error-text {
+  color: #d32f2f;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.selected-file-info {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  background-color: #e3f2fd;
+  border-radius: 4px;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.task-chip-small {
+  display: inline-block;
+  background-color: #e3f2fd;
+  color: #1976d2;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  margin-right: 4px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+}
+
+.task-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.no-tasks {
+  color: #999;
+  font-style: italic;
+  font-size: 12px;
+}
+
+/* Task documents */
+.task-documents {
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  padding: 12px;
+  margin: 10px 0;
+  border-left: 3px solid #2196f3;
+}
+
+.task-documents h4 {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.documents-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.document-item-small {
+  margin-bottom: 6px;
+}
+
+.document-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: #333;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.document-link:hover {
+  background-color: #e3f2fd;
+}
+
+.document-icon {
+  color: #2196f3;
+  font-size: 14px;
+}
+
+.no-documents {
+  font-size: 13px;
+  color: #777;
+  font-style: italic;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.add-document-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #2196f3;
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #e3f2fd;
+}
+
+.add-document-link:hover {
+  background-color: #bbdefb;
+}
+
+.documents-link-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background-color: #e3f2fd;
+  color: #2196f3;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.documents-link-button:hover {
+  background-color: #bbdefb;
+}
+
+.icon-button.info {
+  color: #2196f3;
+}
+
+.icon-button.info:hover {
+  background-color: rgba(33, 150, 243, 0.1);
+}
