@@ -205,25 +205,17 @@ body {
   padding: 12px 0;
 }
 
-.content-scroll-container {
-  width: 100%;
-  position: relative;
-  min-height: calc(100vh - 80px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 20px;
-}
-
 /* Main content area */
 .main-content {
   margin-left: var(--sidebar-width);
   padding-top: 65px; /* Height of app-header */
   height: 100vh;
   width: calc(100% - var(--sidebar-width));
-  overflow-y: auto;
+  overflow: hidden;
   transition: margin-left 0.3s, width 0.3s;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .main-content.sidebar-closed {
@@ -238,8 +230,8 @@ body {
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 20px 20px;
-  min-height: calc(100vh - 65px);
+  padding: 0 20px;
+  height: 100%;
   position: relative;
 }
 
@@ -357,6 +349,7 @@ button.secondary:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   padding: 20px;
   width: 100%;
+  margin-top: 0;
 }
 
 .task-list ul {
@@ -540,14 +533,17 @@ button.secondary:hover {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  background-color: transparent;
+  padding: 20px 0;
+  background-color: var(--background-color);
   position: sticky;
   top: 0;
   z-index: 50;
   width: 100%;
   border-bottom: 1px solid #e0e0e0;
   margin-bottom: 20px;
+  flex-shrink: 0;
+  /* Add subtle shadow for better visual separation */
+  box-shadow: 0 4px 6px -6px rgba(0, 0, 0, 0.1);
 }
 
 .page-header h1 {
@@ -752,7 +748,7 @@ button.secondary:hover {
   background-color: transparent;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-top: 20px;
+  margin-top: 0;
 }
 
 /* Module Grid Layout */
@@ -822,7 +818,7 @@ button.secondary:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   width: 100%;
-  margin-top: 20px;
+  margin-top: 0;
   scroll-margin-top: 150px;
   margin-top: 30px;
   padding-top: 20px;
@@ -2845,7 +2841,7 @@ button.secondary:hover {
   border-top: 1px solid #eee;
 }
 
-/* Content sections */
+/* Content sections with scroll */
 .task-content,
 .document-content,
 .video-content,
@@ -2853,6 +2849,44 @@ button.secondary:hover {
 .module-content {
   width: 100%;
   flex: 1;
+  overflow-y: auto;
+  padding-bottom: 20px;
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+}
+
+.task-content::-webkit-scrollbar,
+.document-content::-webkit-scrollbar,
+.video-content::-webkit-scrollbar,
+.note-content::-webkit-scrollbar,
+.module-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.task-content::-webkit-scrollbar-track,
+.document-content::-webkit-scrollbar-track,
+.video-content::-webkit-scrollbar-track,
+.note-content::-webkit-scrollbar-track,
+.module-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.task-content::-webkit-scrollbar-thumb,
+.document-content::-webkit-scrollbar-thumb,
+.video-content::-webkit-scrollbar-thumb,
+.note-content::-webkit-scrollbar-thumb,
+.module-content::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.task-content::-webkit-scrollbar-thumb:hover,
+.document-content::-webkit-scrollbar-thumb:hover,
+.video-content::-webkit-scrollbar-thumb:hover,
+.note-content::-webkit-scrollbar-thumb:hover,
+.module-content::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 /* Remove the content separator as it's no longer needed */
@@ -2875,6 +2909,7 @@ button.secondary:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   padding: 20px;
   width: 100%;
+  margin-top: 0;
 }
 
 /* Grid styles */
