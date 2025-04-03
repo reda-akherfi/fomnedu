@@ -211,9 +211,11 @@ const Module = () => {
     <div className="page-container">
       <div className="page-header">
         <h1>Modules</h1>
-        <button className="create-button" onClick={() => handleOpenModal()}>
-          <FaPlus /> New Module
-        </button>
+        <div className="header-actions">
+          <button className="create-button" onClick={() => handleOpenModal()}>
+            <FaPlus /> New Module
+          </button>
+        </div>
       </div>
 
       <div className="module-content">
