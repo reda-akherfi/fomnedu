@@ -4,7 +4,7 @@ import { Rnd } from 'react-rnd';
 import { 
   FaPlay, FaPause, FaForward, FaStopwatch, FaExpand, FaCompress, 
   FaEye, FaEyeSlash, FaTimes, FaCog, FaChevronLeft, 
-  FaChevronRight, FaPlus, FaVideo, FaCoffee, FaClock, FaSpinner, FaStepForward, FaChevronUp, FaChevronDown 
+  FaChevronRight, FaPlus, FaVideo, FaCoffee, FaClock, FaSpinner, FaStepForward, FaChevronUp, FaChevronDown, FaFile
 } from 'react-icons/fa';
 import useModuleStore, { Module, DocFile, Video, Note } from '../stores/useModuleStore';
 import useAuthStore from '../stores/useAuthStore';
@@ -823,23 +823,30 @@ const Session = () => {
             </div>
             
             <div className="section-content documents-section">
-              <div className="document-selector">
-                <select
-                  value={selectedDocument ? selectedDocument.id : ''}
-                  onChange={(e) => {
-                    const docId = e.target.value;
-                    const doc = files.find(file => file.id === docId);
-                    if (doc) {
-                      setSelectedDocument(doc);
-                      loadDocument(doc.url);
-                    }
-                  }}
-                >
-                  <option value="">Select a document</option>
-                  {files && files.filter(file => file.type === 'document').map(file => (
-                    <option key={file.id} value={file.id}>{file.name}</option>
-                  ))}
-                </select>
+              <div className="documents-list">
+                <h3>Available Documents</h3>
+                {files && files.filter(file => file.type === 'document').map(file => (
+                  <div 
+                    key={file.id} 
+                    className={`document-item ${selectedDocument && selectedDocument.id === file.id ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedDocument(file);
+                      loadDocument(file.url);
+                    }}
+                  >
+                    <div className="document-icon">
+                      <FaFile />
+                    </div>
+                    <div className="document-name">
+                      {file.name}
+                    </div>
+                  </div>
+                ))}
+                {(!files || files.filter(file => file.type === 'document').length === 0) && (
+                  <div className="no-documents-message">
+                    <p>No documents available</p>
+                  </div>
+                )}
               </div>
               
               <div className="document-preview">
@@ -857,13 +864,13 @@ const Session = () => {
                     <iframe
                       src={selectedDocument.url}
                       title={selectedDocument.name}
-                      width="100%"
-                      height="100%"
+                      className="document-iframe"
                     ></iframe>
                   )
                 ) : (
                   <div className="no-document">
                     <p>No document selected</p>
+                    <p>Select a document from the list</p>
                   </div>
                 )}
               </div>
