@@ -1,10 +1,9 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { useState } from 'react'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
 import ProtectedRoute from './components/ProtectedRoute'
 import Auth from './pages/Auth'
-import Home from './pages/Home'
 import Module from './pages/Module'
 import Tasks from './pages/Tasks'
 import Documents from './pages/Documents'
@@ -46,9 +45,9 @@ function App() {
                 <Sidebar isOpen={isSidebarOpen} />
                 <main className={`main-content ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
                   <Routes>
-                    <Route path="/" element={<Home />} />
+                    <Route path="/" element={<Tasks />} />
                     <Route path="/module" element={<Module />} />
-                    <Route path="/tasks" element={<Tasks />} />
+                    <Route path="/tasks" element={<Navigate to="/" replace />} />
                     <Route path="/documents" element={<Documents />} />
                     <Route path="/videos" element={<Videos />} />
                     <Route path="/notes" element={<NoteView />} />

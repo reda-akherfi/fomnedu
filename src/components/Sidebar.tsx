@@ -1,5 +1,5 @@
 import { NavLink, Link } from 'react-router-dom'
-import { FaHome, FaClipboardList, FaFolder, FaRobot, FaStickyNote, FaTasks, FaVideo } from 'react-icons/fa'
+import { FaClipboardList, FaFolder, FaRobot, FaStickyNote, FaTasks, FaVideo } from 'react-icons/fa'
 
 interface SidebarProps {
   isOpen: boolean
@@ -12,9 +12,9 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
       <nav className="sidebar-nav">
         <NavLink to="/" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <div className="nav-icon">
-            <FaHome />
+            <FaTasks />
           </div>
-          {isOpen && <span className="nav-text">Home</span>}
+          {isOpen && <span className="nav-text">Tasks</span>}
         </NavLink>
         
         <NavLink to="/module" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
@@ -22,13 +22,6 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
             <FaClipboardList />
           </div>
           {isOpen && <span className="nav-text">Module</span>}
-        </NavLink>
-        
-        <NavLink to="/tasks" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <div className="nav-icon">
-            <FaTasks />
-          </div>
-          {isOpen && <span className="nav-text">Tasks</span>}
         </NavLink>
         
         <NavLink to="/documents" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
