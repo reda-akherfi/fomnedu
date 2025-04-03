@@ -34,6 +34,8 @@ const Tasks = () => {
   const [expandedTaskId, setExpandedTaskId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'documents' | 'videos' | 'notes'>('documents');
   const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const [priorityDropdownOpen, setPriorityDropdownOpen] = useState(false);
   
   useEffect(() => {
     if (token) {
@@ -282,39 +284,69 @@ const Tasks = () => {
               <FaFilter /> All Tasks
             </button>
             <div className="dropdown">
-              <button className="filter-button">
+              <button className="filter-button" onClick={() => {
+                setStatusDropdownOpen(!statusDropdownOpen);
+                setPriorityDropdownOpen(false);
+              }}>
                 Status: {filter.status ? filter.status.replace('_', ' ') : 'All'}
               </button>
-              <div className="dropdown-content">
-                <button onClick={() => setFilter(f => ({ ...f, status: undefined }))}>
+              <div className={`dropdown-content ${statusDropdownOpen ? 'show' : ''}`}>
+                <button onClick={() => {
+                  setFilter(f => ({ ...f, status: undefined }));
+                  setStatusDropdownOpen(false);
+                }}>
                   All Statuses
                 </button>
-                <button onClick={() => setFilter(f => ({ ...f, status: TaskStatus.PENDING }))}>
+                <button onClick={() => {
+                  setFilter(f => ({ ...f, status: TaskStatus.PENDING }));
+                  setStatusDropdownOpen(false);
+                }}>
                   Pending
                 </button>
-                <button onClick={() => setFilter(f => ({ ...f, status: TaskStatus.IN_PROGRESS }))}>
+                <button onClick={() => {
+                  setFilter(f => ({ ...f, status: TaskStatus.IN_PROGRESS }));
+                  setStatusDropdownOpen(false);
+                }}>
                   In Progress
                 </button>
-                <button onClick={() => setFilter(f => ({ ...f, status: TaskStatus.COMPLETED }))}>
+                <button onClick={() => {
+                  setFilter(f => ({ ...f, status: TaskStatus.COMPLETED }));
+                  setStatusDropdownOpen(false);
+                }}>
                   Completed
                 </button>
               </div>
             </div>
             <div className="dropdown">
-              <button className="filter-button">
+              <button className="filter-button" onClick={() => {
+                setPriorityDropdownOpen(!priorityDropdownOpen);
+                setStatusDropdownOpen(false);
+              }}>
                 Priority: {filter.priority ? filter.priority : 'All'}
               </button>
-              <div className="dropdown-content">
-                <button onClick={() => setFilter(f => ({ ...f, priority: undefined }))}>
+              <div className={`dropdown-content ${priorityDropdownOpen ? 'show' : ''}`}>
+                <button onClick={() => {
+                  setFilter(f => ({ ...f, priority: undefined }));
+                  setPriorityDropdownOpen(false);
+                }}>
                   All Priorities
                 </button>
-                <button onClick={() => setFilter(f => ({ ...f, priority: TaskPriority.HIGH }))}>
+                <button onClick={() => {
+                  setFilter(f => ({ ...f, priority: TaskPriority.HIGH }));
+                  setPriorityDropdownOpen(false);
+                }}>
                   High
                 </button>
-                <button onClick={() => setFilter(f => ({ ...f, priority: TaskPriority.MEDIUM }))}>
+                <button onClick={() => {
+                  setFilter(f => ({ ...f, priority: TaskPriority.MEDIUM }));
+                  setPriorityDropdownOpen(false);
+                }}>
                   Medium
                 </button>
-                <button onClick={() => setFilter(f => ({ ...f, priority: TaskPriority.LOW }))}>
+                <button onClick={() => {
+                  setFilter(f => ({ ...f, priority: TaskPriority.LOW }));
+                  setPriorityDropdownOpen(false);
+                }}>
                   Low
                 </button>
               </div>
@@ -457,24 +489,12 @@ const Tasks = () => {
                                   <FaVideo className="video-icon" />
                                   <span>{video.title}</span>
                                 </div>
-                                <div className="video-item-actions">
-                                  <Link 
-                                    to={`/videos`}
-                                    className="icon-button small view"
-                                    title="Go to Videos"
-                                  >
-                                    <FaEye />
-                                  </Link>
-                                </div>
                               </li>
                             ))}
                           </ul>
                         ) : (
                           <div className="no-videos">
                             No videos associated with this task.
-                            <Link to="/videos" className="add-video-link">
-                              <FaLink /> Add videos
-                            </Link>
                           </div>
                         )}
                       </div>
@@ -490,24 +510,12 @@ const Tasks = () => {
                                   <FaStickyNote className="note-icon" />
                                   <span>{note.title}</span>
                                 </div>
-                                <div className="note-item-actions">
-                                  <Link 
-                                    to={`/notes`}
-                                    className="icon-button small view"
-                                    title="Go to Notes"
-                                  >
-                                    <FaEye />
-                                  </Link>
-                                </div>
                               </li>
                             ))}
                           </ul>
                         ) : (
                           <div className="no-notes">
                             No notes associated with this task.
-                            <Link to="/notes" className="add-note-link">
-                              <FaLink /> Add notes
-                            </Link>
                           </div>
                         )}
                       </div>

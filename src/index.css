@@ -2129,7 +2129,7 @@ button.secondary:hover {
   margin-top: 5px;
 }
 
-.dropdown:hover .dropdown-content {
+.dropdown-content.show {
   display: block;
 }
 

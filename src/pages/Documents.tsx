@@ -19,6 +19,7 @@ const Documents = () => {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [filterTaskId, setFilterTaskId] = useState<number | null>(null);
   const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
+  const [taskDropdownOpen, setTaskDropdownOpen] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -188,14 +189,17 @@ const Documents = () => {
             </button>
             {tasks.length > 0 && (
               <div className="dropdown">
-                <button className="filter-button">
+                <button className="filter-button" onClick={() => setTaskDropdownOpen(!taskDropdownOpen)}>
                   Filter by Task
                 </button>
-                <div className="dropdown-content">
+                <div className={`dropdown-content ${taskDropdownOpen ? 'show' : ''}`}>
                   {tasks.map(task => (
                     <button
                       key={task.id}
-                      onClick={() => setFilterTaskId(task.id as number)}
+                      onClick={() => {
+                        setFilterTaskId(task.id as number);
+                        setTaskDropdownOpen(false);
+                      }}
                     >
                       {task.title}
                     </button>

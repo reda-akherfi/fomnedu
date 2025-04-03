@@ -281,12 +281,6 @@ const Module = () => {
                 
                 <div className="module-footer">
                   <span>Created on {formatDate(module.createdAt)}</span>
-                  <button 
-                    className="start-session-btn"
-                    onClick={() => startSession(module.id)}
-                  >
-                    <FaPlay /> Start Session
-                  </button>
                 </div>
               </div>
             );

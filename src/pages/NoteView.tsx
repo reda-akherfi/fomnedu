@@ -18,6 +18,7 @@ const NoteView = () => {
   const [content, setContent] = useState('');
   const [selectedTaskIds, setSelectedTaskIds] = useState<number[]>([]);
   const [filterTaskId, setFilterTaskId] = useState<number | null>(null);
+  const [taskDropdownOpen, setTaskDropdownOpen] = useState(false);
   
   // Fetch initial data
   useEffect(() => {
@@ -157,14 +158,17 @@ const NoteView = () => {
             </button>
             {tasks.length > 0 && (
               <div className="dropdown">
-                <button className="filter-button">
+                <button className="filter-button" onClick={() => setTaskDropdownOpen(!taskDropdownOpen)}>
                   Filter by Task
                 </button>
-                <div className="dropdown-content">
+                <div className={`dropdown-content ${taskDropdownOpen ? 'show' : ''}`}>
                   {tasks.map(task => (
                     <button
                       key={task.id}
-                      onClick={() => setFilterTaskId(task.id as number)}
+                      onClick={() => {
+                        setFilterTaskId(task.id as number);
+                        setTaskDropdownOpen(false);
+                      }}
                     >
                       {task.title}
                     </button>
@@ -173,9 +177,6 @@ const NoteView = () => {
               </div>
             )}
           </div>
-          <Link to="/tasks" className="tasks-link-button">
-            <FaLink /> Tasks
-          </Link>
           <button className="create-button" onClick={() => handleOpenModal()}>
             <FaPlus /> Add Note
           </button>
