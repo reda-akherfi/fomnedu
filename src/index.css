@@ -39,7 +39,7 @@ body {
   background-color: #fff;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
   height: 100vh;
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, transform 0.3s ease;
   position: fixed;
   top: 0;
   left: 0;
@@ -54,18 +54,47 @@ body {
 }
 
 .sidebar-header {
+  display: none;
+}
+
+.sidebar-nav {
+  padding: 15px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 20px;
+}
+
+.user-section {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 15px;
-  border-bottom: 1px solid #f0f0f0;
-  position: absolute;
-  top: 60px;
-  left: 0;
-  right: 0;
-  height: 60px;
-  z-index: 1;
-  background-color: #fff;
+  gap: 15px;
+}
+
+.username {
+  font-weight: 500;
+  color: #555;
+}
+
+.logout-button {
+  background-color: transparent;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.logout-button:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.app-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary-color);
 }
 
 .logo-container {
@@ -128,14 +157,6 @@ body {
   color: var(--primary-color);
 }
 
-.sidebar-nav {
-  padding: 15px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-top: 60px;
-}
-
 .nav-item {
   display: flex;
   align-items: center;
@@ -175,6 +196,17 @@ body {
   padding: 12px 0;
 }
 
+.content-scroll-container {
+  width: 100%;
+  position: relative;
+  min-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 20px;
+}
+
+/* Adjust main content to be a fixed container */
 .main-content {
   margin-left: var(--sidebar-width);
   padding: 20px;
@@ -182,6 +214,11 @@ body {
   padding-top: 80px;
   width: calc(100% - var(--sidebar-width));
   box-sizing: border-box;
+  height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scroll-padding-top: 150px; /* Increased to ensure more space */
+  position: relative;
 }
 
 .main-content.sidebar-closed {
@@ -193,13 +230,13 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 0; /* Remove gap since we're adding margins to children */
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 20px 20px;
   box-sizing: border-box;
-  scroll-padding-top: 120px;
+  scroll-padding-top: 150px;
 }
 
 .gantt-calendar-container {
@@ -316,9 +353,12 @@ button.secondary:hover {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 20px;
   width: 100%;
+  margin-top: 20px;
+  scroll-margin-top: 150px;
+  margin-top: 30px;
   padding-top: 20px;
-  margin-top: -10px;
-  scroll-margin-top: 120px;
+  position: relative;
+  z-index: 10;
 }
 
 .task-list h3 {
@@ -498,20 +538,21 @@ button.secondary:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
-  background-color: rgba(248, 249, 250, 0.95);
+  margin-bottom: 0; /* Remove bottom margin */
+  background-color: rgba(248, 249, 250, 0.98);
   padding: 20px 25px;
-  border-radius: 10px;
+  border-radius: 10px 10px 0 0; /* Rounded only at the top */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   width: 100%;
   box-sizing: border-box;
   position: sticky;
   top: 80px;
-  z-index: 20;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  z-index: 50; /* Higher z-index to ensure it stays on top */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   transition: all 0.3s ease;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: none; /* Remove bottom border */
 }
 
 .page-header.scrolled {
@@ -641,9 +682,12 @@ button.secondary:hover {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   width: 100%;
-  padding-top: 0;
-  margin-top: -10px;
-  scroll-margin-top: 120px;
+  margin-top: 20px;
+  scroll-margin-top: 150px;
+  margin-top: 30px;
+  padding-top: 20px;
+  position: relative;
+  z-index: 10;
 }
 
 .documents-table {
@@ -862,11 +906,16 @@ button.secondary:hover {
 
 .notes-grid-container {
   width: 100%;
-  padding-top: 0;
-  margin-top: -10px;
+  margin-top: 20px;
+  scroll-margin-top: 150px;
+  margin-top: 30px;
+  padding-top: 20px;
+  position: relative;
+  z-index: 10;
 }
 
 .notes-grid {
+  margin-top: 10px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 25px;
@@ -1205,7 +1254,18 @@ button.secondary:hover {
   padding: 20px 0;
 }
 
+.videos-grid-container {
+  width: 100%;
+  margin-top: 20px;
+  scroll-margin-top: 150px;
+  margin-top: 30px;
+  padding-top: 20px;
+  position: relative;
+  z-index: 10;
+}
+
 .videos-grid {
+  margin-top: 10px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 25px;
@@ -2425,48 +2485,40 @@ button.secondary:hover {
   z-index: 100;
   display: flex;
   align-items: center;
-  justify-content: center;
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
   justify-content: space-between;
-  width: 100%;
   padding: 0 20px;
-  max-width: 1600px;
 }
 
-.app-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--primary-color);
-}
-
-.user-section {
+.header-logo {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 10px;
 }
 
-.username {
-  font-weight: 500;
-  color: #555;
+.logo-image {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
 }
 
-.logout-button {
-  background-color: transparent;
+.hamburger-button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
   color: #666;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 6px 12px;
-  font-size: 14px;
   transition: all 0.2s;
+  border-radius: 50%;
 }
 
-.logout-button:hover {
-  background-color: #f5f5f5;
-  color: #333;
+.hamburger-button:hover {
+  background-color: #f0f0f0;
+  color: var(--primary-color);
 }
 
 /* Auth styles */
@@ -2627,4 +2679,36 @@ button.secondary:hover {
   align-items: center;
   padding-top: 15px;
   border-top: 1px solid #eee;
+}
+
+/* Add a separator to create clear visual distinction */
+.content-separator {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 0;
+  width: 100%;
+  position: sticky;
+  top: 80px;
+  z-index: 40;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Content wrapper to put space between header and list */
+.list-wrapper {
+  padding-top: 10px;
+  width: 100%;
+}
+
+/* Adjust task list, documents list, etc. */
+.task-list,
+.documents-list-container,
+.videos-grid-container,
+.notes-grid-container {
+  border-radius: 0;
+  box-shadow: none;
+  margin-top: 0;
+  padding-top: 20px;
+  width: 100%;
+  position: relative;
+  z-index: 10;
 }

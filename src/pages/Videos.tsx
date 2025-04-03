@@ -1,5 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { FaPlus, FaTrash, FaLink, FaEdit, FaExclamationTriangle, FaFilter, FaPlay, FaYoutube } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaLink, FaEdit, FaExclamationTriangle, FaFilter, FaPlay, FaYoutube, FaVideo, FaPlayCircle } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import useVideoStore from '../stores/useVideoStore';
 import useTaskStore from '../stores/useTaskStore';
@@ -169,6 +169,17 @@ const Videos = () => {
     ? videos.filter(video => video.taskIds && video.taskIds.includes(filterTaskId))
     : videos;
   
+  // Function to determine the source of a video
+  const getVideoSource = (url: string) => {
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      return 'YouTube';
+    }
+    if (url.includes('vimeo.com')) {
+      return 'Vimeo';
+    }
+    return 'External Link';
+  };
+  
   // Show loading state
   if (isLoading && videos.length === 0) {
     return (
@@ -188,7 +199,7 @@ const Videos = () => {
               className={`filter-button ${filterTaskId === null ? 'active' : ''}`} 
               onClick={() => setFilterTaskId(null)}
             >
-              <FaFilter /> All Videos
+              All Videos
             </button>
             {tasks.length > 0 && (
               <div className="dropdown">
@@ -211,122 +222,89 @@ const Videos = () => {
               </div>
             )}
           </div>
-          <button className="create-button" onClick={() => handleOpenModal()}>
+          <button className="create-button" onClick={() => setShowModal(true)}>
             <FaPlus /> Add Video
           </button>
         </div>
       </div>
       
-      {error && (
-        <div className="error-message">
-          <FaExclamationTriangle /> {error}
-        </div>
-      )}
+      <div className="content-separator"></div>
       
-      {selectedVideo && (
-        <div className="video-player-container">
-          <div className="video-player-header">
-            <h2>{selectedVideo.title}</h2>
-            <button className="close-player-btn" onClick={() => setSelectedVideo(null)}>
-              <FaTrash />
-            </button>
-          </div>
-          <div className="video-player-frame">
-            {videoService.getYouTubeVideoId(selectedVideo.url) && (
-              <iframe
-                width="100%"
-                height="100%"
-                src={`https://www.youtube.com/embed/${videoService.getYouTubeVideoId(selectedVideo.url) || ''}?autoplay=1`}
-                title={selectedVideo.title}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
-            )}
-          </div>
-        </div>
-      )}
-      
-      {!selectedVideo && (
+      <div className="list-wrapper">
         <div className="videos-grid-container">
-          {filteredVideos.length === 0 ? (
+          {error && (
+            <div className="error-message">
+              <FaExclamationTriangle /> {error}
+            </div>
+          )}
+          
+          {isLoading ? (
+            <div className="loading-state">
+              <div className="loading-spinner"></div>
+              <p>Loading videos...</p>
+            </div>
+          ) : filteredVideos.length === 0 ? (
             <div className="empty-state">
-              <FaYoutube size={48} />
+              <FaVideo size={48} />
               <p>No videos found</p>
-              <button onClick={() => handleOpenModal()}>Add your first video</button>
+              <button onClick={() => setShowModal(true)}>Add your first video</button>
             </div>
           ) : (
             <div className="videos-grid">
               {filteredVideos.map(video => (
                 <div key={video.id} className="video-card">
                   <div className="video-thumbnail" onClick={() => handlePlayVideo(video)}>
-                    <img 
-                      src={getYouTubeThumbnail(video.url)} 
-                      alt={video.title} 
-                    />
-                    <div className="video-play-btn">
-                      <FaPlay />
-                    </div>
+                    {video.url ? (
+                      <img src={getYouTubeThumbnail(video.url)} alt={video.title} />
+                    ) : (
+                      <div className="video-placeholder">
+                        <FaPlayCircle size={50} />
+                      </div>
+                    )}
                   </div>
                   <div className="video-info">
-                    <h3>{video.title}</h3>
-                    <div className="video-dates">
-                      Added on {formatDate(video.createdAt)}
-                    </div>
-                    <div className="video-tasks">
-                      {getAssociatedTasks(video).length > 0 ? (
-                        <div className="task-chips">
-                          {getAssociatedTasks(video).map(task => (
-                            <span key={task.id} className="task-chip-small">
-                              {task.title}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="no-tasks">No tasks associated</span>
+                    <h3 className="video-title">{video.title}</h3>
+                    <div className="video-meta">
+                      <span className="video-source">{getVideoSource(video.url)}</span>
+                      {video.createdAt && (
+                        <span className="video-date">{formatDate(video.createdAt)}</span>
                       )}
                     </div>
-                  </div>
-                  <div className="video-actions">
-                    <button 
-                      className="icon-button play" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePlayVideo(video);
-                      }}
-                      title="Play"
-                    >
-                      <FaPlay />
-                    </button>
-                    <button 
-                      className="icon-button edit" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenModal(video);
-                      }}
-                      title="Edit"
-                    >
-                      <FaEdit />
-                    </button>
-                    <button 
-                      className="icon-button delete" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (video.id) {
-                          handleDeleteVideo(video.id);
-                        }
-                      }}
-                      title="Delete"
-                    >
-                      <FaTrash />
-                    </button>
+                    <div className="task-chips">
+                      {getAssociatedTasks(video).map(task => (
+                        <span key={task.id} className="task-chip-small">
+                          {task.title}
+                        </span>
+                      ))}
+                      {video.taskIds.length === 0 && (
+                        <span className="no-tasks">No tasks</span>
+                      )}
+                    </div>
+                    <div className="video-actions">
+                      <button 
+                        className="icon-button view"
+                        title="Watch Video"
+                        onClick={() => handlePlayVideo(video)}
+                      >
+                        <FaPlay /> Watch
+                      </button>
+                      {video.id && (
+                        <button 
+                          className="icon-button delete"
+                          title="Delete"
+                          onClick={() => handleDeleteVideo(video.id as number)}
+                        >
+                          <FaTrash />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           )}
         </div>
-      )}
+      </div>
       
       {showModal && (
         <div className="modal-backdrop">

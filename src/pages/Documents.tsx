@@ -214,93 +214,100 @@ const Documents = () => {
         </div>
       </div>
       
-      {error && (
-        <div className="error-message">
-          <FaExclamationTriangle /> {error}
-        </div>
-      )}
+      <div className="content-separator"></div>
       
-      {filteredDocuments.length === 0 ? (
-        <div className="empty-state">
-          <FaFile size={48} />
-          <p>No documents found</p>
-          <button onClick={() => setShowModal(true)}>Upload your first document</button>
-        </div>
-      ) : (
+      <div className="list-wrapper">
         <div className="documents-list-container">
-          <table className="documents-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Size</th>
-                <th>Upload Date</th>
-                <th>Associated Tasks</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredDocuments.map(document => (
-                <tr key={document.id} className="document-row">
-                  <td className="document-name">
-                    <div className="document-name-with-icon">
-                      {getFileIcon(document.contentType)}
-                      <span>{document.name}</span>
-                    </div>
-                  </td>
-                  <td>{document.contentType}</td>
-                  <td>{getFileSize(document.size)}</td>
-                  <td>{formatDate(document.uploadDate)}</td>
-                  <td>
-                    <div className="task-chips">
-                      {getAssociatedTasks(document).map(task => (
-                        <span key={task.id} className="task-chip-small">
-                          {task.title}
-                        </span>
-                      ))}
-                      {document.taskIds.length === 0 && (
-                        <span className="no-tasks">No tasks</span>
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="document-actions">
-                      <button 
-                        className="icon-button download"
-                        title="Download"
-                        onClick={() => handleDownloadDocument(document)}
-                        disabled={downloadingIds.has(document.id as string)}
-                      >
-                        {downloadingIds.has(document.id as string) ? (
-                          <span className="loading-spinner-small"></span>
-                        ) : (
-                          <FaDownload />
-                        )}
-                      </button>
-                      <button 
-                        className="icon-button view"
-                        title="View in Browser"
-                        onClick={() => handleOpenDocument(document)}
-                      >
-                        <FaEye />
-                      </button>
-                      {document.id && (
-                        <button 
-                          className="icon-button delete"
-                          title="Delete"
-                          onClick={() => handleDeleteDocument(document.id as string, document.name)}
-                        >
-                          <FaTrash />
-                        </button>
-                      )}
-                    </div>
-                  </td>
+          {error && (
+            <div className="error-message">
+              <FaExclamationTriangle /> {error}
+            </div>
+          )}
+          
+          {isLoading ? (
+            <div className="loading-state">
+              <div className="loading-spinner"></div>
+              <p>Loading documents...</p>
+            </div>
+          ) : filteredDocuments.length === 0 ? (
+            <div className="empty-state">
+              <FaFile size={48} />
+              <p>No documents found</p>
+              <button onClick={() => setShowModal(true)}>Upload your first document</button>
+            </div>
+          ) : (
+            <table className="documents-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Task</th>
+                  <th>Uploaded</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredDocuments.map(doc => (
+                  <tr key={doc.id} className="document-row">
+                    <td className="document-name">
+                      <div className="document-name-with-icon">
+                        {getFileIcon(doc.contentType)}
+                        <span>{doc.name}</span>
+                      </div>
+                    </td>
+                    <td>{doc.contentType}</td>
+                    <td>
+                      <div className="task-chips">
+                        {getAssociatedTasks(doc).map(task => (
+                          <span key={task.id} className="task-chip-small">
+                            {task.title}
+                          </span>
+                        ))}
+                        {doc.taskIds.length === 0 && (
+                          <span className="no-tasks">No tasks</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>{formatDate(doc.uploadDate)}</td>
+                    <td>
+                      <div className="document-actions">
+                        <button 
+                          className="icon-button download"
+                          title="Download"
+                          onClick={() => handleDownloadDocument(doc)}
+                          disabled={downloadingIds.has(doc.id as string)}
+                        >
+                          {downloadingIds.has(doc.id as string) ? (
+                            <span className="loading-spinner-small"></span>
+                          ) : (
+                            <FaDownload />
+                          )}
+                        </button>
+                        <button 
+                          className="icon-button view"
+                          title="View in Browser"
+                          onClick={() => handleOpenDocument(doc)}
+                        >
+                          <FaEye />
+                        </button>
+                        {doc.id && (
+                          <button 
+                            className="icon-button delete"
+                            title="Delete"
+                            onClick={() => handleDeleteDocument(doc.id as string, doc.name)}
+                          >
+                            <FaTrash />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
-      )}
+      </div>
       
       {showModal && (
         <div className="modal-backdrop">

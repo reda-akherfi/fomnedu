@@ -1,5 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaCheck, FaPlay, FaClock, FaExclamationTriangle, FaFilter, FaFile, FaFileAlt, FaLink, FaDownload, FaEye, FaVideo, FaStickyNote } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaCheck, FaPlay, FaClock, FaExclamationTriangle, FaFilter, FaFile, FaFileAlt, FaLink, FaDownload, FaEye, FaVideo, FaStickyNote, FaTasks } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import useTaskStore from '../stores/useTaskStore';
 import useDocumentStore from '../stores/useDocumentStore';
@@ -358,195 +358,208 @@ const Tasks = () => {
         </div>
       </div>
       
-      {error && (
-        <div className="error-message">
-          <FaExclamationTriangle /> {error}
-        </div>
-      )}
+      <div className="content-separator"></div>
       
-      <div className="task-list">
-        {filteredTasks.length === 0 ? (
-          <div className="no-tasks">No tasks found. Create your first task!</div>
-        ) : (
-          <ul>
-            {filteredTasks.map(task => (
-              <li key={task.id} className={`task-item ${getStatusClass(task.status)}`}>
-                <div className="task-header">
-                  <div className="task-title">
-                    {getStatusIcon(task.status)}
-                    <h4>{task.title}</h4>
-                    {getPriorityLabel(task.priority)}
-                  </div>
-                  <div className="task-actions">
-                    <button
-                      className="icon-button play"
-                      onClick={() => startTaskSession(task.id)}
-                      title="Start Session"
-                    >
-                      <FaPlay />
-                    </button>
-                    <button
-                      className="icon-button info"
-                      onClick={() => toggleExpandTask(task.id)}
-                      title="View Details"
-                    >
-                      <FaFileAlt />
-                    </button>
-                    <button
-                      className="icon-button edit"
-                      onClick={() => handleOpenModal(task)}
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      className="icon-button delete"
-                      onClick={() => task.id && handleDelete(task.id)}
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                </div>
-                
-                {task.description && (
-                  <div className="task-description">{task.description}</div>
-                )}
-                
-                {expandedTaskId === task.id && task.id && (
-                  <div className="task-details">
-                    <div className="task-tabs">
-                      <button 
-                        className={`tab-button ${activeTab === 'documents' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('documents')}
+      <div className="list-wrapper">
+        <div className="task-list">
+          {error && (
+            <div className="error-message">
+              <FaExclamationTriangle /> {error}
+            </div>
+          )}
+          
+          {isLoading ? (
+            <div className="loading-state">
+              <div className="loading-spinner"></div>
+              <p>Loading tasks...</p>
+            </div>
+          ) : filteredTasks.length === 0 ? (
+            <div className="empty-state">
+              <FaTasks size={48} />
+              <p>No tasks found</p>
+              <button onClick={() => handleOpenModal()}>Create your first task</button>
+            </div>
+          ) : (
+            <ul>
+              {filteredTasks.map(task => (
+                <li key={task.id} className={`task-item ${getStatusClass(task.status)}`}>
+                  <div className="task-header">
+                    <div className="task-title">
+                      {getStatusIcon(task.status)}
+                      <h4>{task.title}</h4>
+                      {getPriorityLabel(task.priority)}
+                    </div>
+                    <div className="task-actions">
+                      <button
+                        className="icon-button play"
+                        onClick={() => startTaskSession(task.id)}
+                        title="Start Session"
                       >
-                        <FaFile /> Documents {taskDocuments[task.id] ? `(${taskDocuments[task.id].length})` : '(0)'}
+                        <FaPlay />
                       </button>
-                      <button 
-                        className={`tab-button ${activeTab === 'videos' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('videos')}
+                      <button
+                        className="icon-button info"
+                        onClick={() => toggleExpandTask(task.id)}
+                        title="View Details"
                       >
-                        <FaVideo /> Videos {taskVideos[task.id] ? `(${taskVideos[task.id].length})` : '(0)'}
+                        <FaFileAlt />
                       </button>
-                      <button 
-                        className={`tab-button ${activeTab === 'notes' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('notes')}
+                      <button
+                        className="icon-button edit"
+                        onClick={() => handleOpenModal(task)}
                       >
-                        <FaStickyNote /> Notes {taskNotes[task.id] ? `(${taskNotes[task.id].length})` : '(0)'}
+                        <FaEdit />
+                      </button>
+                      <button
+                        className="icon-button delete"
+                        onClick={() => task.id && handleDelete(task.id)}
+                      >
+                        <FaTrash />
                       </button>
                     </div>
-                    
-                    {activeTab === 'documents' && (
-                      <div className="task-documents">
-                        {taskDocuments[task.id] && taskDocuments[task.id].length > 0 ? (
-                          <ul className="documents-list">
-                            {taskDocuments[task.id].map(doc => (
-                              <li key={doc.id} className="document-item-small">
-                                <div className="document-item-content">
-                                  <FaFileAlt className="document-icon" />
-                                  <span>{doc.name}</span>
-                                </div>
-                                <div className="document-item-actions">
-                                  <button 
-                                    onClick={() => handleDownloadDocument(doc)}
-                                    className="icon-button small download"
-                                    title="Download"
-                                    disabled={downloadingIds.has(doc.id as string)}
-                                  >
-                                    {downloadingIds.has(doc.id as string) ? (
-                                      <span className="loading-spinner-mini"></span>
-                                    ) : (
-                                      <FaDownload />
-                                    )}
-                                  </button>
-                                  <button 
-                                    onClick={() => handleOpenDocument(doc)}
-                                    className="icon-button small view"
-                                    title="View"
-                                  >
-                                    <FaEye />
-                                  </button>
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <div className="no-documents">
-                            No documents associated with this task.
-                            <Link to="/documents" className="add-document-link">
-                              <FaLink /> Upload documents
-                            </Link>
-                          </div>
-                        )}
+                  </div>
+                  
+                  {task.description && (
+                    <div className="task-description">{task.description}</div>
+                  )}
+                  
+                  {expandedTaskId === task.id && task.id && (
+                    <div className="task-details">
+                      <div className="task-tabs">
+                        <button 
+                          className={`tab-button ${activeTab === 'documents' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('documents')}
+                        >
+                          <FaFile /> Documents {taskDocuments[task.id] ? `(${taskDocuments[task.id].length})` : '(0)'}
+                        </button>
+                        <button 
+                          className={`tab-button ${activeTab === 'videos' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('videos')}
+                        >
+                          <FaVideo /> Videos {taskVideos[task.id] ? `(${taskVideos[task.id].length})` : '(0)'}
+                        </button>
+                        <button 
+                          className={`tab-button ${activeTab === 'notes' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('notes')}
+                        >
+                          <FaStickyNote /> Notes {taskNotes[task.id] ? `(${taskNotes[task.id].length})` : '(0)'}
+                        </button>
                       </div>
+                      
+                      {activeTab === 'documents' && (
+                        <div className="task-documents">
+                          {taskDocuments[task.id] && taskDocuments[task.id].length > 0 ? (
+                            <ul className="documents-list">
+                              {taskDocuments[task.id].map(doc => (
+                                <li key={doc.id} className="document-item-small">
+                                  <div className="document-item-content">
+                                    <FaFileAlt className="document-icon" />
+                                    <span>{doc.name}</span>
+                                  </div>
+                                  <div className="document-item-actions">
+                                    <button 
+                                      onClick={() => handleDownloadDocument(doc)}
+                                      className="icon-button small download"
+                                      title="Download"
+                                      disabled={downloadingIds.has(doc.id as string)}
+                                    >
+                                      {downloadingIds.has(doc.id as string) ? (
+                                        <span className="loading-spinner-mini"></span>
+                                      ) : (
+                                        <FaDownload />
+                                      )}
+                                    </button>
+                                    <button 
+                                      onClick={() => handleOpenDocument(doc)}
+                                      className="icon-button small view"
+                                      title="View"
+                                    >
+                                      <FaEye />
+                                    </button>
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <div className="no-documents">
+                              No documents associated with this task.
+                              <Link to="/documents" className="add-document-link">
+                                <FaLink /> Upload documents
+                              </Link>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {activeTab === 'videos' && (
+                        <div className="task-videos">
+                          {taskVideos[task.id] && taskVideos[task.id].length > 0 ? (
+                            <ul className="videos-list">
+                              {taskVideos[task.id].map(video => (
+                                <li key={video.id} className="video-item-small">
+                                  <div className="video-item-content">
+                                    <FaVideo className="video-icon" />
+                                    <span>{video.title}</span>
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <div className="no-videos">
+                              No videos associated with this task.
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      {activeTab === 'notes' && (
+                        <div className="task-notes">
+                          {taskNotes[task.id] && taskNotes[task.id].length > 0 ? (
+                            <ul className="notes-list">
+                              {taskNotes[task.id].map(note => (
+                                <li key={note.id} className="note-item-small">
+                                  <div className="note-item-content">
+                                    <FaStickyNote className="note-icon" />
+                                    <span>{note.title}</span>
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <div className="no-notes">
+                              No notes associated with this task.
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      <button 
+                        className="start-session-btn"
+                        onClick={() => startTaskSession(task.id)}
+                      >
+                        <FaPlay /> Start Session
+                      </button>
+                    </div>
+                  )}
+                  
+                  <div className="task-dates">
+                    <span>Due: {formatDate(task.dueDate)}</span>
+                    {task.createdAt && (
+                      <span>Created: {formatDate(task.createdAt)}</span>
                     )}
-                    
-                    {activeTab === 'videos' && (
-                      <div className="task-videos">
-                        {taskVideos[task.id] && taskVideos[task.id].length > 0 ? (
-                          <ul className="videos-list">
-                            {taskVideos[task.id].map(video => (
-                              <li key={video.id} className="video-item-small">
-                                <div className="video-item-content">
-                                  <FaVideo className="video-icon" />
-                                  <span>{video.title}</span>
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <div className="no-videos">
-                            No videos associated with this task.
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
-                    {activeTab === 'notes' && (
-                      <div className="task-notes">
-                        {taskNotes[task.id] && taskNotes[task.id].length > 0 ? (
-                          <ul className="notes-list">
-                            {taskNotes[task.id].map(note => (
-                              <li key={note.id} className="note-item-small">
-                                <div className="note-item-content">
-                                  <FaStickyNote className="note-icon" />
-                                  <span>{note.title}</span>
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <div className="no-notes">
-                            No notes associated with this task.
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    
                     <button 
-                      className="start-session-btn"
+                      className="icon-button small play"
                       onClick={() => startTaskSession(task.id)}
+                      title="Start Session"
                     >
                       <FaPlay /> Start Session
                     </button>
                   </div>
-                )}
-                
-                <div className="task-dates">
-                  <span>Due: {formatDate(task.dueDate)}</span>
-                  {task.createdAt && (
-                    <span>Created: {formatDate(task.createdAt)}</span>
-                  )}
-                  <button 
-                    className="icon-button small play"
-                    onClick={() => startTaskSession(task.id)}
-                    title="Start Session"
-                  >
-                    <FaPlay /> Start Session
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
       
       {showModal && (

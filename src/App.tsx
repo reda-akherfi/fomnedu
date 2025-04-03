@@ -61,18 +61,20 @@ function App() {
           element={
             <ProtectedRoute>
               <>
-                <Header />
+                <Header toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
                 <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
                 <main className={`main-content ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/module" element={<Module />} />
-                    <Route path="/tasks" element={<Tasks />} />
-                    <Route path="/documents" element={<Documents />} />
-                    <Route path="/videos" element={<Videos />} />
-                    <Route path="/notes" element={<NoteView />} />
-                    <Route path="/chatbot" element={<Chatbot />} />
-                  </Routes>
+                  <div className="content-scroll-container">
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/module" element={<Module />} />
+                      <Route path="/tasks" element={<Tasks />} />
+                      <Route path="/documents" element={<Documents />} />
+                      <Route path="/videos" element={<Videos />} />
+                      <Route path="/notes" element={<NoteView />} />
+                      <Route path="/chatbot" element={<Chatbot />} />
+                    </Routes>
+                  </div>
                 </main>
               </>
             </ProtectedRoute>

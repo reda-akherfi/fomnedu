@@ -216,6 +216,8 @@ const Module = () => {
         </button>
       </div>
 
+      <div className="content-separator"></div>
+      
       {(error || tasksError) && (
         <div className="error-message">
           <FaExclamationTriangle /> {error || tasksError}
