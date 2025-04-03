@@ -1,0 +1,61 @@
+/* Centered Sections Toolbar styles */
+
+.session-container .sections-toolbar {
+  padding: 14px 16px;
+  background-color: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: center !important; /* Changed from space-between to center */
+  align-items: center;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.session-container .section-toggles {
+  display: flex;
+  gap: 12px; /* Increased gap for better spacing */
+  margin: 0 auto; /* Ensure perfect centering */
+  position: relative; /* For better positioning */
+}
+
+.session-container .section-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Ensure icon and text are centered */
+  gap: 8px;
+  padding: 9px 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 6px; /* Increased from 4px for more modern look */
+  font-size: 14px;
+  font-weight: 500; /* Added for better visibility */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-width: 120px; /* Added to make buttons more uniform in width */
+  color: #555;
+}
+
+/* Add subtle shadow for better visibility */
+.session-container .section-toggle:hover {
+  background-color: #e9ecef;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+  border-color: #ccc;
+}
+
+.session-container .section-toggle.active {
+  background-color: #e8f0fe;
+  border-color: #4285f4;
+  color: #4285f4;
+  box-shadow: 0 1px 3px rgba(66, 133, 244, 0.2);
+  font-weight: 600;
+}
+
+/* Add icons styling */
+.session-container .section-toggle svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0; /* Prevent icons from shrinking */
+} 
