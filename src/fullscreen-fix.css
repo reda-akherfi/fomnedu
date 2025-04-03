@@ -1,14 +1,130 @@
+/* Prevent scrollbar issues from affecting layout */
+html, body {
+  width: 100% !important;
+  overflow-x: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Ensure the entire session container maintains full width */
+.session-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Prevent layout shifts when switching to fullscreen */
+.session-container .sections-container.has-fullscreen {
+  position: static !important;
+  width: 100% !important;
+  overflow: visible !important;
+}
+
+/* Ensure header maintains full width in fullscreen mode */
+.sections-container.has-fullscreen ~ .session-header,
+.session-header {
+  width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+}
+
 /* Fullscreen section styling */
 .section.fullscreen {
-  position: absolute !important;
-  top: 0 !important;
+  position: fixed !important;
+  top: 70px !important;
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
+  width: 100vw !important; /* Using viewport width instead of percentage */
+  height: calc(100vh - 70px) !important;
+  z-index: 10 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background-color: #fff !important;
+  overflow: auto !important;
+}
+
+/* Enhance section header in fullscreen */
+.section.fullscreen .section-header {
+  padding: 12px 20px !important;
+  background-color: #f8f9fa !important;
+  border-bottom: 1px solid #e9ecef !important;
+}
+
+/* Make section content fill the available space */
+.section.fullscreen .section-content {
+  height: calc(100% - 50px) !important;
+  max-height: none !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Adjust specific section content areas to fill space */
+.section.fullscreen .documents-section,
+.section.fullscreen .videos-section,
+.section.fullscreen .notes-section,
+.section.fullscreen .chatbot-section {
+  display: flex !important;
+  flex-direction: row !important;
+  height: 100% !important;
+}
+
+/* Document section specific fullscreen enhancements */
+.section.fullscreen .documents-section .documents-list {
+  width: 250px !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  border-right: 1px solid #e9ecef !important;
+}
+
+.section.fullscreen .documents-section .document-preview {
+  flex: 1 !important;
+  height: 100% !important;
+}
+
+.section.fullscreen .documents-section .document-iframe {
+  height: 100% !important;
+}
+
+/* Video section specific fullscreen enhancements */
+.section.fullscreen .videos-section .video-player {
+  flex: 1 !important;
+  height: 100% !important;
+}
+
+.section.fullscreen .videos-section .video-player iframe {
+  height: 100% !important;
+}
+
+.section.fullscreen .videos-section .video-playlist {
+  width: 300px !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  border-left: 1px solid #e9ecef !important;
+}
+
+/* Notes section specific fullscreen enhancements */
+.section.fullscreen .notes-section .note-editor-container {
   width: 100% !important;
   height: 100% !important;
-  z-index: 100 !important;
-  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.section.fullscreen .notes-section .quill {
+  flex: 1 !important;
+  overflow: hidden !important;
+}
+
+.section.fullscreen .notes-section .quill .ql-container {
+  height: calc(100% - 42px) !important;
 }
 
 /* Hide other sections when any section is in fullscreen */
