@@ -443,7 +443,7 @@ const TaskSession = () => {
         </button>
         
         <div className="module-title">
-          {task?.title} - Study Session
+          {task?.title}
         </div>
         
         <div className="timer-container">
