@@ -17,18 +17,20 @@ const Header = ({ toggleSidebar }: HeaderProps) => {
 
   return (
     <header className="app-header">
-      <div className="header-logo">
-        <img src="/logo-transparent.png" alt="Logo" className="logo-image" />
-        <div className="app-title">OmnEdu</div>
+      <div className="left-section">
+        <button onClick={toggleSidebar} className="hamburger-button">
+          <FaBars />
+        </button>
+        <div className="header-logo">
+          <img src="/logo-transparent.png" alt="Logo" className="logo-image" />
+          <div className="app-title">OmnEdu</div>
+        </div>
       </div>
       
       <div className="user-section">
         <span className="username">{username}</span>
         <button onClick={handleLogout} className="logout-button">
           Logout
-        </button>
-        <button onClick={toggleSidebar} className="hamburger-button">
-          <FaBars />
         </button>
       </div>
     </header>
