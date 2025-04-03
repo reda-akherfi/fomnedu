@@ -10,4 +10,15 @@ input[name="timerMode"] + label {
 .timer-type-label {
     font-weight: bold !important;
     font-size: 18px !important;
+}
+
+/* Fix section control button icons */
+.section-controls button svg {
+    width: 16px !important;
+    height: 16px !important;
+    color: #333 !important;
+    fill: #333 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: block !important;
 } 

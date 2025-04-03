@@ -1,0 +1,38 @@
+/* Global fixes for React Icons SVG elements */
+svg[class*="Fa"] {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 1em !important;
+    height: 1em !important;
+    vertical-align: -0.125em !important;
+    color: inherit !important;
+    fill: currentColor !important;
+}
+
+/* Ensure icons are visible in buttons of all kinds */
+button svg {
+    color: inherit !important;
+    fill: currentColor !important;
+    visibility: visible !important;
+    display: inline-block !important;
+    opacity: 1 !important;
+}
+
+/* Specific icon size overrides as needed */
+.section-controls button svg {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+.section-toggle svg {
+    width: 16px !important;
+    height: 16px !important;
+    margin-right: 5px !important;
+}
+
+.back-button svg {
+    width: 16px !important;
+    height: 16px !important;
+    margin-right: 5px !important;
+} 
