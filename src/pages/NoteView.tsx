@@ -135,15 +135,6 @@ const NoteView = () => {
     return content.substring(0, maxLength) + '...';
   };
   
-  // Show loading state
-  if (isLoading && notes.length === 0) {
-    return (
-      <div className="page-container">
-        <div className="loading-state">Loading notes...</div>
-      </div>
-    );
-  }
-  
   return (
     <div className="page-container">
       <div className="page-header">
@@ -154,7 +145,7 @@ const NoteView = () => {
               className={`filter-button ${filterTaskId === null ? 'active' : ''}`} 
               onClick={() => setFilterTaskId(null)}
             >
-              <FaFilter /> All Notes
+              All Notes
             </button>
             {tasks.length > 0 && (
               <div className="dropdown">
@@ -183,65 +174,73 @@ const NoteView = () => {
         </div>
       </div>
       
-      {error && (
-        <div className="error-message">
-          <FaExclamationTriangle /> {error}
-        </div>
-      )}
-      
-      <div className="notes-grid-container">
-        {filteredNotes.length === 0 ? (
+      <div className="note-content">
+        {error && (
+          <div className="error-message">
+            <FaExclamationTriangle /> {error}
+          </div>
+        )}
+        
+        {isLoading ? (
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>Loading notes...</p>
+          </div>
+        ) : filteredNotes.length === 0 ? (
           <div className="empty-state">
             <FaStickyNote size={48} />
             <p>No notes found</p>
-            <button onClick={() => handleOpenModal()}>Add your first note</button>
+            <button onClick={() => handleOpenModal()}>Create your first note</button>
           </div>
         ) : (
-          <div className="notes-grid">
-            {filteredNotes.map(note => (
-              <div key={note.id} className="note-card">
-                <div className="note-header">
-                  <h3>{note.title}</h3>
-                  <div className="note-actions">
-                    <button 
-                      className="icon-button edit" 
-                      onClick={() => handleOpenModal(note)}
-                      title="Edit"
-                    >
-                      <FaEdit />
-                    </button>
-                    <button 
-                      className="icon-button delete" 
-                      onClick={() => note.id && handleDeleteNote(note.id)}
-                      title="Delete"
-                    >
-                      <FaTrash />
-                    </button>
+          <div className="notes-grid-container">
+            <div className="notes-grid">
+              {filteredNotes.map(note => (
+                <div key={note.id} className="note-card">
+                  <div className="note-header">
+                    <h3>{note.title}</h3>
+                    <div className="note-actions">
+                      <button 
+                        className="icon-button edit"
+                        title="Edit"
+                        onClick={() => handleOpenModal(note)}
+                      >
+                        <FaEdit />
+                      </button>
+                      {note.id && (
+                        <button 
+                          className="icon-button delete"
+                          title="Delete"
+                          onClick={() => handleDeleteNote(note.id as number)}
+                        >
+                          <FaTrash />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="note-content-preview">
+                    {truncateContent(note.content)}
+                  </div>
+                  
+                  <div className="note-footer">
+                    <div className="task-chips">
+                      {getAssociatedTasks(note).map(task => (
+                        <span key={task.id} className="task-chip-small">
+                          {task.title}
+                        </span>
+                      ))}
+                      {note.taskIds.length === 0 && (
+                        <span className="no-tasks">No tasks</span>
+                      )}
+                    </div>
+                    <div className="note-date">
+                      {formatDate(note.createdAt)}
+                    </div>
                   </div>
                 </div>
-                <div className="note-content">
-                  {truncateContent(note.content)}
-                </div>
-                <div className="note-footer">
-                  <div className="note-date">
-                    Created: {formatDate(note.createdAt)}
-                  </div>
-                  <div className="note-tasks">
-                    {getAssociatedTasks(note).length > 0 ? (
-                      <div className="task-chips">
-                        {getAssociatedTasks(note).map(task => (
-                          <span key={task.id} className="task-chip-small">
-                            {task.title}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="no-tasks">No tasks associated</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>
