@@ -320,15 +320,6 @@ const Tasks = () => {
               </div>
             </div>
           </div>
-          <Link to="/documents" className="documents-link-button">
-            <FaFile /> Documents
-          </Link>
-          <Link to="/videos" className="videos-link-button">
-            <FaVideo /> Videos
-          </Link>
-          <Link to="/notes" className="notes-link-button">
-            <FaStickyNote /> Notes
-          </Link>
           <button className="create-button" onClick={() => handleOpenModal()}>
             <FaPlus /> New Task
           </button>
