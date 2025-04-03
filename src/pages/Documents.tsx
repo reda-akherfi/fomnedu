@@ -214,9 +214,7 @@ const Documents = () => {
         </div>
       </div>
       
-      <div className="content-separator"></div>
-      
-      <div className="list-wrapper">
+      <div className="document-content">
         <div className="documents-list-container">
           {error && (
             <div className="error-message">

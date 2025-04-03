@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -16,25 +16,6 @@ import TaskSession from './pages/TaskSession'
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
-
-  // Add scroll event listener to apply a scrolled class to page headers
-  useEffect(() => {
-    const handleScroll = () => {
-      const pageHeaders = document.querySelectorAll('.page-header');
-      const scrollPosition = window.scrollY;
-      
-      pageHeaders.forEach(header => {
-        if (scrollPosition > 20) {
-          header.classList.add('scrolled');
-        } else {
-          header.classList.remove('scrolled');
-        }
-      });
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   return (
     <div className="app-container">
@@ -62,19 +43,17 @@ function App() {
             <ProtectedRoute>
               <>
                 <Header toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-                <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+                <Sidebar isOpen={isSidebarOpen} />
                 <main className={`main-content ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-                  <div className="content-scroll-container">
-                    <Routes>
-                      <Route path="/" element={<Home />} />
-                      <Route path="/module" element={<Module />} />
-                      <Route path="/tasks" element={<Tasks />} />
-                      <Route path="/documents" element={<Documents />} />
-                      <Route path="/videos" element={<Videos />} />
-                      <Route path="/notes" element={<NoteView />} />
-                      <Route path="/chatbot" element={<Chatbot />} />
-                    </Routes>
-                  </div>
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/module" element={<Module />} />
+                    <Route path="/tasks" element={<Tasks />} />
+                    <Route path="/documents" element={<Documents />} />
+                    <Route path="/videos" element={<Videos />} />
+                    <Route path="/notes" element={<NoteView />} />
+                    <Route path="/chatbot" element={<Chatbot />} />
+                  </Routes>
                 </main>
               </>
             </ProtectedRoute>

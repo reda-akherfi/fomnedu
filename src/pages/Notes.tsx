@@ -77,9 +77,7 @@ const Notes: React.FC = () => {
         </div>
       </div>
       
-      <div className="content-separator"></div>
-      
-      <div className="list-wrapper">
+      <div className="note-content">
         <div className="notes-grid-container">
           {error && (
             <div className="error-message">

@@ -206,33 +206,32 @@ body {
   padding-top: 20px;
 }
 
-/* Adjust main content to be a fixed container */
+/* Main content area */
 .main-content {
   margin-left: var(--sidebar-width);
-  padding-top: 65px;
+  padding-top: 65px; /* Height of app-header */
   height: 100vh;
   width: calc(100% - var(--sidebar-width));
-  overflow-x: hidden;
+  overflow-y: auto;
   transition: margin-left 0.3s, width 0.3s;
   position: relative;
 }
 
 .main-content.sidebar-closed {
-  margin-left: var(--sidebar-collapsed-width);
-  width: calc(100% - var(--sidebar-collapsed-width));
+  margin-left: 60px;
+  width: calc(100% - 60px);
 }
 
+/* Page container */
 .page-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0; /* Remove gap since we're adding margins to children */
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px 20px;
-  box-sizing: border-box;
-  scroll-padding-top: 150px;
+  min-height: calc(100vh - 65px);
+  position: relative;
 }
 
 .gantt-calendar-container {
@@ -346,15 +345,10 @@ button.secondary:hover {
 .task-list {
   background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   padding: 20px;
+  margin-bottom: 20px;
   width: 100%;
-  margin-top: 20px;
-  scroll-margin-top: 150px;
-  margin-top: 30px;
-  padding-top: 20px;
-  position: relative;
-  z-index: 10;
 }
 
 .task-list h3 {
@@ -529,7 +523,7 @@ button.secondary:hover {
   padding: 20px 0;
 }
 
-/* Styles pour les modules */
+/* Page header styling */
 .page-header {
   display: flex;
   flex-direction: column;
@@ -538,11 +532,12 @@ button.secondary:hover {
   background-color: rgba(255, 255, 255, 0.97);
   backdrop-filter: blur(8px);
   position: sticky;
-  top: 65px; /* Positioned directly below the app header */
+  top: 0;
   z-index: 50;
   width: 100%;
   border-bottom: 1px solid #e0e0e0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
 }
 
 .page-header.scrolled {
@@ -603,6 +598,20 @@ button.secondary:hover {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Styles for list containers */
+.task-list,
+.documents-list-container,
+.videos-grid-container,
+.notes-grid-container,
+.module-grid {
+  width: 100%;
+  padding: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-top: 20px;
+}
+
 /* Module Grid Layout */
 .module-grid {
   display: grid;
@@ -610,7 +619,6 @@ button.secondary:hover {
   gap: 25px;
   width: 100%;
   position: relative;
-  margin: 20px 0;
 }
 
 .module-card {
@@ -620,7 +628,6 @@ button.secondary:hover {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  margin: 0;
   height: 100%;
   border-top: 4px solid var(--primary-color);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -2681,34 +2688,51 @@ button.secondary:hover {
   border-top: 1px solid #eee;
 }
 
-/* Separator between header and content */
+/* Content sections */
+.task-content,
+.document-content,
+.video-content,
+.note-content,
+.module-content {
+  width: 100%;
+  flex: 1;
+}
+
+/* Remove the content separator as it's no longer needed */
 .content-separator {
-  height: 1px;
-  background-color: #e0e0e0;
-  margin: 0;
-  width: 100%;
-  position: sticky;
-  top: 132px; /* Position below page header (65px header + ~67px page header) */
-  z-index: 40;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05);
+  display: none;
 }
 
-/* Content wrapper to put space between header and list */
+/* Remove list-wrapper as it's no longer needed */
 .list-wrapper {
-  padding-top: 10px;
+  padding: 0;
   width: 100%;
 }
 
-/* Adjust task list, documents list, etc. */
-.task-list,
+/* Container styles */
 .documents-list-container,
 .videos-grid-container,
 .notes-grid-container {
-  border-radius: 0;
-  box-shadow: none;
-  margin-top: 0;
-  padding-top: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 20px;
   width: 100%;
-  position: relative;
-  z-index: 10;
+}
+
+/* Grid styles */
+.videos-grid,
+.notes-grid {
+  display: grid;
+  gap: 25px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.videos-grid {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.notes-grid {
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
 }

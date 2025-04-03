@@ -216,79 +216,79 @@ const Module = () => {
         </button>
       </div>
 
-      <div className="content-separator"></div>
-      
-      {(error || tasksError) && (
-        <div className="error-message">
-          <FaExclamationTriangle /> {error || tasksError}
-        </div>
-      )}
+      <div className="module-content">
+        {(error || tasksError) && (
+          <div className="error-message">
+            <FaExclamationTriangle /> {error || tasksError}
+          </div>
+        )}
 
-      {modules.length === 0 ? (
-        <div className="empty-state">
-          <FaFolder size={48} />
-          <p>You haven't created any modules yet</p>
-          <button onClick={() => handleOpenModal()}>Create your first module</button>
-        </div>
-      ) : (
-        <div className="module-grid">
-          {isLoadingModuleTasks && (
-            <div className="loading-overlay">
-              <div className="loading-spinner"></div>
-            </div>
-          )}
-          {modules.map(module => {
-            const moduleTasks = moduleTasksMap[module.id] || [];
-            
-            return (
-              <div key={module.id} className="module-card">
-                <div className="module-card-header">
-                  <h3>{module.name}</h3>
-                  <div className="module-actions">
-                    <button 
-                      className="icon-button edit" 
-                      onClick={() => handleOpenModal(module)}
-                    >
-                      <FaEdit />
-                    </button>
-                    <button 
-                      className="icon-button delete" 
-                      onClick={() => handleDeleteModule(module.id, module.name)}
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                </div>
-                
-                {module.description && (
-                  <p className="module-description">{module.description}</p>
-                )}
-                
-                <div className="module-info">
-                  <span>Tasks: {module.taskIds ? module.taskIds.length : 0}</span>
-                </div>
-                
-                {moduleTasks.length > 0 && (
-                  <div className="module-tasks">
-                    <h4>Associated Tasks:</h4>
-                    <ul className="task-chips">
-                      {moduleTasks.map(task => (
-                        <li key={task.id} className="task-chip">
-                          {task.title}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                
-                <div className="module-footer">
-                  <span>Created on {formatDate(module.createdAt)}</span>
-                </div>
+        {modules.length === 0 ? (
+          <div className="empty-state">
+            <FaFolder size={48} />
+            <p>You haven't created any modules yet</p>
+            <button onClick={() => handleOpenModal()}>Create your first module</button>
+          </div>
+        ) : (
+          <div className="module-grid">
+            {isLoadingModuleTasks && (
+              <div className="loading-overlay">
+                <div className="loading-spinner"></div>
               </div>
-            );
-          })}
-        </div>
-      )}
+            )}
+            {modules.map(module => {
+              const moduleTasks = moduleTasksMap[module.id] || [];
+              
+              return (
+                <div key={module.id} className="module-card">
+                  <div className="module-card-header">
+                    <h3>{module.name}</h3>
+                    <div className="module-actions">
+                      <button 
+                        className="icon-button edit" 
+                        onClick={() => handleOpenModal(module)}
+                      >
+                        <FaEdit />
+                      </button>
+                      <button 
+                        className="icon-button delete" 
+                        onClick={() => handleDeleteModule(module.id, module.name)}
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {module.description && (
+                    <p className="module-description">{module.description}</p>
+                  )}
+                  
+                  <div className="module-info">
+                    <span>Tasks: {module.taskIds ? module.taskIds.length : 0}</span>
+                  </div>
+                  
+                  {moduleTasks.length > 0 && (
+                    <div className="module-tasks">
+                      <h4>Associated Tasks:</h4>
+                      <ul className="task-chips">
+                        {moduleTasks.map(task => (
+                          <li key={task.id} className="task-chip">
+                            {task.title}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  <div className="module-footer">
+                    <span>Created on {formatDate(module.createdAt)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {showModal && (
         <div className="modal-backdrop">

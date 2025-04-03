@@ -228,9 +228,7 @@ const Videos = () => {
         </div>
       </div>
       
-      <div className="content-separator"></div>
-      
-      <div className="list-wrapper">
+      <div className="video-content">
         <div className="videos-grid-container">
           {error && (
             <div className="error-message">

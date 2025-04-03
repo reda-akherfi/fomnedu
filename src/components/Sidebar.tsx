@@ -3,7 +3,7 @@ import { FaHome, FaClipboardList, FaFolder, FaRobot, FaStickyNote, FaTasks, FaVi
 
 interface SidebarProps {
   isOpen: boolean
-  toggleSidebar: () => void
+  toggleSidebar?: () => void
 }
 
 const Sidebar = ({ isOpen }: SidebarProps) => {

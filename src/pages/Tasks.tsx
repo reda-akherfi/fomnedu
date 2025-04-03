@@ -1,5 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaCheck, FaPlay, FaClock, FaExclamationTriangle, FaFilter, FaFile, FaFileAlt, FaLink, FaDownload, FaEye, FaVideo, FaStickyNote, FaTasks } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaCheck, FaPlay, FaClock, FaExclamationTriangle, FaFilter, FaFile, FaFileAlt, FaLink, FaDownload, FaEye, FaVideo, FaStickyNote, FaTasks, FaClipboardList } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import useTaskStore from '../stores/useTaskStore';
 import useDocumentStore from '../stores/useDocumentStore';
@@ -36,6 +36,7 @@ const Tasks = () => {
   const [downloadingIds, setDownloadingIds] = useState<Set<string>>(new Set());
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   const [priorityDropdownOpen, setPriorityDropdownOpen] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'in-progress' | 'completed'>('all');
   
   useEffect(() => {
     if (token) {
@@ -278,89 +279,37 @@ const Tasks = () => {
         <div className="header-actions">
           <div className="filter-controls">
             <button 
-              className={`filter-button ${Object.keys(filter).length === 0 ? 'active' : ''}`} 
-              onClick={() => setFilter({})}
+              className={`filter-button ${filterStatus === 'all' ? 'active' : ''}`} 
+              onClick={() => setFilterStatus('all')}
             >
-              <FaFilter /> All Tasks
+              All
             </button>
-            <div className="dropdown">
-              <button className="filter-button" onClick={() => {
-                setStatusDropdownOpen(!statusDropdownOpen);
-                setPriorityDropdownOpen(false);
-              }}>
-                Status: {filter.status ? filter.status.replace('_', ' ') : 'All'}
-              </button>
-              <div className={`dropdown-content ${statusDropdownOpen ? 'show' : ''}`}>
-                <button onClick={() => {
-                  setFilter(f => ({ ...f, status: undefined }));
-                  setStatusDropdownOpen(false);
-                }}>
-                  All Statuses
-                </button>
-                <button onClick={() => {
-                  setFilter(f => ({ ...f, status: TaskStatus.PENDING }));
-                  setStatusDropdownOpen(false);
-                }}>
-                  Pending
-                </button>
-                <button onClick={() => {
-                  setFilter(f => ({ ...f, status: TaskStatus.IN_PROGRESS }));
-                  setStatusDropdownOpen(false);
-                }}>
-                  In Progress
-                </button>
-                <button onClick={() => {
-                  setFilter(f => ({ ...f, status: TaskStatus.COMPLETED }));
-                  setStatusDropdownOpen(false);
-                }}>
-                  Completed
-                </button>
-              </div>
-            </div>
-            <div className="dropdown">
-              <button className="filter-button" onClick={() => {
-                setPriorityDropdownOpen(!priorityDropdownOpen);
-                setStatusDropdownOpen(false);
-              }}>
-                Priority: {filter.priority ? filter.priority : 'All'}
-              </button>
-              <div className={`dropdown-content ${priorityDropdownOpen ? 'show' : ''}`}>
-                <button onClick={() => {
-                  setFilter(f => ({ ...f, priority: undefined }));
-                  setPriorityDropdownOpen(false);
-                }}>
-                  All Priorities
-                </button>
-                <button onClick={() => {
-                  setFilter(f => ({ ...f, priority: TaskPriority.HIGH }));
-                  setPriorityDropdownOpen(false);
-                }}>
-                  High
-                </button>
-                <button onClick={() => {
-                  setFilter(f => ({ ...f, priority: TaskPriority.MEDIUM }));
-                  setPriorityDropdownOpen(false);
-                }}>
-                  Medium
-                </button>
-                <button onClick={() => {
-                  setFilter(f => ({ ...f, priority: TaskPriority.LOW }));
-                  setPriorityDropdownOpen(false);
-                }}>
-                  Low
-                </button>
-              </div>
-            </div>
+            <button 
+              className={`filter-button ${filterStatus === 'pending' ? 'active' : ''}`} 
+              onClick={() => setFilterStatus('pending')}
+            >
+              Pending
+            </button>
+            <button 
+              className={`filter-button ${filterStatus === 'in-progress' ? 'active' : ''}`} 
+              onClick={() => setFilterStatus('in-progress')}
+            >
+              In Progress
+            </button>
+            <button 
+              className={`filter-button ${filterStatus === 'completed' ? 'active' : ''}`}  
+              onClick={() => setFilterStatus('completed')}
+            >
+              Completed
+            </button>
           </div>
           <button className="create-button" onClick={() => handleOpenModal()}>
-            <FaPlus /> New Task
+            <FaPlus /> Add Task
           </button>
         </div>
       </div>
       
-      <div className="content-separator"></div>
-      
-      <div className="list-wrapper">
+      <div className="task-content">
         <div className="task-list">
           {error && (
             <div className="error-message">
@@ -375,7 +324,7 @@ const Tasks = () => {
             </div>
           ) : filteredTasks.length === 0 ? (
             <div className="empty-state">
-              <FaTasks size={48} />
+              <FaClipboardList size={48} />
               <p>No tasks found</p>
               <button onClick={() => handleOpenModal()}>Create your first task</button>
             </div>
