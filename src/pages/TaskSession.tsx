@@ -100,9 +100,11 @@ const TaskSession = () => {
   const localTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Format YouTube URL for embedding
-  const formatYouTubeUrl = (url: string) => {
-    const videoId = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)?.[1];
-    return videoId ? `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=1` : url;
+  const formatYouTubeUrl = (url: string): string => {
+    const videoId = videoService.getYouTubeVideoId(url);
+    if (!videoId) return url;
+    
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&showinfo=0&fs=1`;
   };
   
   // Load document with authentication

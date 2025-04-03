@@ -94,20 +94,92 @@ html, body {
 }
 
 /* Video section specific fullscreen enhancements */
+.section.fullscreen .videos-section {
+  display: flex !important;
+  flex-direction: row !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  background-color: #000 !important;
+}
+
+/* Video player container */
 .section.fullscreen .videos-section .video-player {
   flex: 1 !important;
   height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: #000 !important;
+  position: relative !important;
+  min-width: 0 !important; /* Allow flex shrinking */
+  padding: 0 !important;
+  overflow: hidden !important;
 }
 
+/* Full height container for YouTube iframe */
+.section.fullscreen .videos-section .video-player::before {
+  content: "";
+  display: block;
+  padding-top: 30px; /* Add some top padding */
+}
+
+/* YouTube iframe */
 .section.fullscreen .videos-section .video-player iframe {
-  height: 100% !important;
+  position: relative !important;
+  width: 85% !important; /* Fixed percentage width */
+  height: 85% !important; /* Fixed percentage height */
+  border: none !important;
+  aspect-ratio: 16/9 !important; /* Enforce standard video aspect ratio */
+  margin: 0 auto !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important; /* Add subtle shadow for depth */
+  z-index: 2 !important;
 }
 
+/* No video selected message */
+.section.fullscreen .videos-section .no-video-selected {
+  color: #fff !important;
+  font-size: 18px !important;
+  text-align: center !important;
+}
+
+/* Playlist container */
 .section.fullscreen .videos-section .video-playlist {
-  width: 300px !important;
+  width: 250px !important;
+  min-width: 250px !important;
+  max-width: 250px !important;
   height: 100% !important;
   overflow-y: auto !important;
   border-left: 1px solid #e9ecef !important;
+  background-color: #f8f9fa !important;
+  padding: 0 !important;
+}
+
+/* Individual video item in playlist */
+.section.fullscreen .videos-section .video-item {
+  padding: 10px !important;
+  border-bottom: 1px solid #e9ecef !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.section.fullscreen .videos-section .video-item:hover {
+  background-color: #e9ecef !important;
+}
+
+.section.fullscreen .videos-section .video-item.active {
+  background-color: #e2e6ea !important;
+  border-left: 3px solid #007bff !important;
+}
+
+/* Video thumbnail */
+.section.fullscreen .videos-section .video-thumbnail {
+  margin-bottom: 8px !important;
+}
+
+.section.fullscreen .videos-section .video-thumbnail img {
+  width: 100% !important;
+  height: auto !important;
+  border-radius: 4px !important;
 }
 
 /* Notes section specific fullscreen enhancements */
