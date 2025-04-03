@@ -195,10 +195,21 @@ html, body {
 
 /* Video dropdown items in fullscreen */
 .section.fullscreen .videos-section .video-dropdown-item {
-  padding: 10px 15px !important;
+  padding: 15px !important;
   border-bottom: 1px solid #eee !important;
   cursor: pointer !important;
-  transition: background-color 0.2s !important;
+  transition: background-color 0.2s, border-left 0.2s !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  white-space: normal !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: block !important;
+}
+
+/* Hide thumbnail related elements in fullscreen */
+.section.fullscreen .videos-section .video-thumbnail {
+  display: none !important;
 }
 
 .section.fullscreen .videos-section .video-dropdown-item:hover {
