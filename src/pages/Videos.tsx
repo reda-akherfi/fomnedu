@@ -161,7 +161,10 @@ const Videos = () => {
   
   // Handle video playback
   const handlePlayVideo = (video: Video) => {
-    setSelectedVideo(video);
+    if (video.url) {
+      // Open video in a new tab
+      window.open(video.url, '_blank');
+    }
   };
   
   // Filter videos by task
@@ -263,9 +266,8 @@ const Videos = () => {
                   <div className="video-info">
                     <h3 className="video-title">{video.title}</h3>
                     <div className="video-meta">
-                      <span className="video-source">{getVideoSource(video.url)}</span>
                       {video.createdAt && (
-                        <span className="video-date">{formatDate(video.createdAt)}</span>
+                        <span className="video-date">Added {formatDate(video.createdAt)}</span>
                       )}
                     </div>
                     <div className="task-chips">
