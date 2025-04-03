@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Rnd } from 'react-rnd';
 import { FaPlay, FaPause, FaStopwatch, FaExpand, FaCompress, FaEye, FaEyeSlash, FaTimes, FaCog, FaChevronLeft, FaFile, FaVideo, FaStickyNote, FaSpinner } from 'react-icons/fa';
@@ -378,7 +378,7 @@ const TaskSession = () => {
   };
   
   // Toggle fullscreen mode for a section
-  const toggleFullscreen = (section: SectionType) => {
+  const toggleFullscreen = useCallback((section: SectionType) => {
     // If another section is already fullscreen, disable it
     const currentFullscreen = Object.entries(sectionFullscreen).find(([_, value]) => value === true);
     if (currentFullscreen && currentFullscreen[0] !== section) {
@@ -392,7 +392,52 @@ const TaskSession = () => {
       ...prev,
       [section]: !prev[section]
     }));
-  };
+  }, [sectionFullscreen]);
+  
+  // Handle keyboard shortcuts for fullscreen toggle
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    // Check if Alt key is pressed along with 1-4
+    if (event.altKey && !event.ctrlKey && !event.shiftKey && !event.metaKey) {
+      const sectionMap: Record<string, SectionType> = {
+        '1': 'documents',
+        '2': 'videos',
+        '3': 'notes',
+        '4': 'chatbot'
+      };
+      
+      const section = sectionMap[event.key];
+      
+      if (section && sectionVisibility[section]) {
+        event.preventDefault();
+        toggleFullscreen(section);
+      }
+    }
+    
+    // Add 'alt-key-pressed' class to body when Alt is pressed
+    if (event.key === 'Alt') {
+      document.body.classList.add('alt-key-pressed');
+    }
+  }, [sectionVisibility, toggleFullscreen]);
+  
+  // Handle keyboard up events to remove Alt key indicator
+  const handleKeyUp = useCallback((event: KeyboardEvent) => {
+    if (event.key === 'Alt') {
+      document.body.classList.remove('alt-key-pressed');
+    }
+  }, []);
+  
+  // Add and remove keyboard event listeners
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      // Ensure alt-key-pressed class is removed on unmount
+      document.body.classList.remove('alt-key-pressed');
+    };
+  }, [handleKeyDown, handleKeyUp]);
   
   // Handle section position/size change
   const handleSectionChange = (section: SectionType, position: { x: number, y: number, width: number, height: number }) => {
@@ -595,9 +640,9 @@ const TaskSession = () => {
         {sectionVisibility.documents && (
           <div className={`section ${sectionFullscreen.documents ? 'fullscreen' : ''}`}>
             <div className="section-header">
-              <h2>Documents</h2>
+              <h2>Documents <span className="keyboard-shortcut">(Alt+1)</span></h2>
               <div className="section-controls">
-                <button onClick={() => toggleFullscreen('documents')}>
+                <button onClick={() => toggleFullscreen('documents')} title="Toggle fullscreen (Alt+1)">
                   {sectionFullscreen.documents ? <FaCompress /> : <FaExpand />}
                 </button>
                 <button onClick={() => toggleSection('documents')}>
@@ -645,9 +690,9 @@ const TaskSession = () => {
         {sectionVisibility.videos && (
           <div className={`section ${sectionFullscreen.videos ? 'fullscreen' : ''}`}>
             <div className="section-header">
-              <h2>Videos</h2>
+              <h2>Videos <span className="keyboard-shortcut">(Alt+2)</span></h2>
               <div className="section-controls">
-                <button onClick={() => toggleFullscreen('videos')}>
+                <button onClick={() => toggleFullscreen('videos')} title="Toggle fullscreen (Alt+2)">
                   {sectionFullscreen.videos ? <FaCompress /> : <FaExpand />}
                 </button>
                 <button onClick={() => toggleSection('videos')}>
@@ -710,9 +755,9 @@ const TaskSession = () => {
         {sectionVisibility.notes && (
           <div className={`section ${sectionFullscreen.notes ? 'fullscreen' : ''}`}>
             <div className="section-header">
-              <h2>Notes</h2>
+              <h2>Notes <span className="keyboard-shortcut">(Alt+3)</span></h2>
               <div className="section-controls">
-                <button onClick={() => toggleFullscreen('notes')}>
+                <button onClick={() => toggleFullscreen('notes')} title="Toggle fullscreen (Alt+3)">
                   {sectionFullscreen.notes ? <FaCompress /> : <FaExpand />}
                 </button>
                 <button onClick={() => toggleSection('notes')}>
@@ -762,9 +807,9 @@ const TaskSession = () => {
         {sectionVisibility.chatbot && (
           <div className={`section ${sectionFullscreen.chatbot ? 'fullscreen' : ''}`}>
             <div className="section-header">
-              <h2>AI Assistant</h2>
+              <h2>AI Assistant <span className="keyboard-shortcut">(Alt+4)</span></h2>
               <div className="section-controls">
-                <button onClick={() => toggleFullscreen('chatbot')}>
+                <button onClick={() => toggleFullscreen('chatbot')} title="Toggle fullscreen (Alt+4)">
                   {sectionFullscreen.chatbot ? <FaCompress /> : <FaExpand />}
                 </button>
                 <button onClick={() => toggleSection('chatbot')}>
