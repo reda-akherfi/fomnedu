@@ -5,6 +5,7 @@ import App from './App'
 import './index.css'
 import './icon-override.css'
 import './pomodoro-timer.css'
+import './timer-fix.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

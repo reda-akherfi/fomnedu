@@ -667,9 +667,10 @@ const Session = () => {
           
           {/* Timer Settings Dialog */}
           {isTimerSettingsOpen && (
-            <div className="timer-settings-overlay">
+            <div className="timer-settings-overlay" key={`timer-settings-${Date.now()}`}>
               <div className="timer-settings">
                 <h3>Pomodoro Timer Settings</h3>
+                <p style={{ color: '#666', marginBottom: '15px', textAlign: 'center' }}>Session Component View</p>
                 
                 <div className="timer-settings-options">
                   <div className="timer-duration-inputs">

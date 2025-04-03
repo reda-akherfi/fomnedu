@@ -1,0 +1,13 @@
+/* Hide any radio buttons for timer type selection */
+.timer-mode-selector,
+.timer-mode-selector label,
+input[name="timerMode"],
+input[name="timerMode"] + label {
+    display: none !important;
+}
+
+/* Ensure work and break timers are clearly visible */
+.timer-type-label {
+    font-weight: bold !important;
+    font-size: 18px !important;
+} 
