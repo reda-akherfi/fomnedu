@@ -4,7 +4,7 @@ import { Rnd } from 'react-rnd';
 import { 
   FaPlay, FaPause, FaForward, FaStopwatch, FaExpand, FaCompress, 
   FaEye, FaEyeSlash, FaTimes, FaCog, FaChevronLeft, 
-  FaChevronRight, FaPlus, FaVideo, FaCoffee, FaClock, FaSpinner, FaStepForward 
+  FaChevronRight, FaPlus, FaVideo, FaCoffee, FaClock, FaSpinner, FaStepForward, FaChevronUp, FaChevronDown 
 } from 'react-icons/fa';
 import useModuleStore, { Module, DocFile, Video, Note } from '../stores/useModuleStore';
 import useAuthStore from '../stores/useAuthStore';
@@ -119,6 +119,16 @@ const Session = () => {
 
   // Add isLoadingDocument state
   const [isLoadingDocument, setIsLoadingDocument] = useState<boolean>(false);
+
+  // Added state for video dropdown
+  const [isVideoDropdownOpen, setIsVideoDropdownOpen] = useState<boolean>(false);
+
+  // Additional state for playlist dropdown
+  const [isPlaylistOpen, setIsPlaylistOpen] = useState<boolean>(false);
+  
+  // References for the playlist dropdowns
+  const playlistRef = useRef<HTMLDivElement>(null);
+  const emptyPlaylistRef = useRef<HTMLDivElement>(null);
 
   // Handle timer completion and transition to next timer
   const handleTimerCompletion = useCallback(async () => {
@@ -614,6 +624,27 @@ const Session = () => {
     return () => clearInterval(saveInterval);
   }, [noteContent, noteTitle, currentNoteId]);
 
+  // Add event listener to close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      // Check both playlist refs
+      const isPlaylistClick = 
+        (playlistRef.current && playlistRef.current.contains(event.target as Node)) ||
+        (emptyPlaylistRef.current && emptyPlaylistRef.current.contains(event.target as Node));
+      
+      if (!isPlaylistClick) {
+        setIsPlaylistOpen(false);
+      }
+    }
+    
+    // Add event listener
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      // Remove event listener on cleanup
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [playlistRef, emptyPlaylistRef]);
+
   return (
     <div className="session-container">
       {/* Barre supérieure avec minuteur et contrôles */}
@@ -879,56 +910,9 @@ const Session = () => {
             </div>
             
             <div className="section-content videos-section">
-              <div className="video-simple-layout">
-                {/* Left side - Video list */}
-                <div className="video-list-panel">
-                  <h3>Available Videos</h3>
-                  <div className="video-search">
-                    <input
-                      type="text"
-                      placeholder="Search videos..."
-                      value={videoSearchQuery}
-                      onChange={(e) => setVideoSearchQuery(e.target.value)}
-                    />
-                  </div>
-                  <div className="video-list">
-                    {moduleVideos
-                      .filter(video => 
-                        video.title.toLowerCase().includes(videoSearchQuery.toLowerCase())
-                      )
-                      .map(video => (
-                        <div 
-                          key={video.id}
-                          className={`video-list-item ${selectedVideos.some(v => v.id === video.id) ? 'selected' : ''}`}
-                          onClick={() => {
-                            const videoObj: FileObject = {
-                              id: video.id || '',
-                              name: video.title,
-                              url: video.url || '',
-                              type: 'video'
-                            };
-                            
-                            if (!selectedVideos.some(v => v.id === video.id)) {
-                              setSelectedVideos([...selectedVideos, videoObj]);
-                            }
-                            
-                            const indexInSelected = selectedVideos.findIndex(v => v.id === video.id);
-                            if (indexInSelected >= 0) {
-                              setCurrentVideoIndex(indexInSelected);
-                            } else {
-                              setCurrentVideoIndex(selectedVideos.length);
-                            }
-                          }}
-                        >
-                          {video.title}
-                        </div>
-                      ))
-                    }
-                  </div>
-                </div>
-                
-                {/* Right side - Video player */}
-                <div className="video-player-panel">
+              <div className="video-container">
+                {/* Video player section */}
+                <div className="video-player-container">
                   {selectedVideos.length > 0 ? (
                     <>
                       <div className="video-player">
@@ -936,37 +920,144 @@ const Session = () => {
                           src={formatYouTubeUrl(selectedVideos[currentVideoIndex].url)}
                           title={selectedVideos[currentVideoIndex].name}
                           frameBorder="0"
-                          allow="encrypted-media; gyroscope; picture-in-picture"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
                         ></iframe>
                       </div>
-                      <div className="video-current-title">
-                        <h4>{selectedVideos[currentVideoIndex].name}</h4>
-                      </div>
-                      {selectedVideos.length > 1 && (
-                        <div className="video-navigation">
-                          <button 
-                            onClick={() => navigateVideo('prev')}
-                            disabled={currentVideoIndex === 0}
+                      <div className="video-info-bar">
+                        <div className="video-playlist" ref={playlistRef}>
+                          <div 
+                            className="playlist-header" 
+                            onClick={() => setIsPlaylistOpen(!isPlaylistOpen)}
                           >
-                            <FaChevronLeft /> Previous
-                          </button>
-                          <span className="video-counter">
-                            {currentVideoIndex + 1} / {selectedVideos.length}
-                          </span>
-                          <button 
-                            onClick={() => navigateVideo('next')}
-                            disabled={currentVideoIndex === selectedVideos.length - 1}
-                          >
-                            Next <FaChevronRight />
-                          </button>
+                            <h3>{selectedVideos[currentVideoIndex].name}</h3>
+                            <button className="video-dropdown-toggle">
+                              {isPlaylistOpen ? <FaChevronUp /> : <FaChevronDown />}
+                            </button>
+                          </div>
+                          
+                          {isPlaylistOpen && (
+                            <div className="playlist-dropdown show">
+                              <div className="video-search">
+                                <input
+                                  type="text"
+                                  placeholder="Search videos..."
+                                  value={videoSearchQuery}
+                                  onChange={(e) => setVideoSearchQuery(e.target.value)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                              <div className="video-dropdown-list">
+                                {moduleVideos
+                                  .filter(video => 
+                                    video.title.toLowerCase().includes(videoSearchQuery.toLowerCase())
+                                  )
+                                  .map(video => (
+                                    <div 
+                                      key={video.id}
+                                      className={`video-dropdown-item ${selectedVideos.some(v => v.id === video.id) && 
+                                        selectedVideos[currentVideoIndex].id === video.id ? 'active' : ''}`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const videoObj: FileObject = {
+                                          id: video.id || '',
+                                          name: video.title,
+                                          url: video.url || '',
+                                          type: 'video'
+                                        };
+                                        
+                                        if (!selectedVideos.some(v => v.id === video.id)) {
+                                          setSelectedVideos([...selectedVideos, videoObj]);
+                                          setCurrentVideoIndex(selectedVideos.length);
+                                        } else {
+                                          const indexInSelected = selectedVideos.findIndex(v => v.id === video.id);
+                                          if (indexInSelected >= 0) {
+                                            setCurrentVideoIndex(indexInSelected);
+                                          }
+                                        }
+                                        setIsPlaylistOpen(false);
+                                      }}
+                                    >
+                                      {video.title}
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
+                        
+                        {selectedVideos.length > 1 && (
+                          <div className="video-navigation">
+                            <button 
+                              onClick={() => navigateVideo('prev')}
+                              disabled={currentVideoIndex === 0}
+                            >
+                              <FaChevronLeft /> Previous
+                            </button>
+                            <span className="video-counter">
+                              {currentVideoIndex + 1} / {selectedVideos.length}
+                            </span>
+                            <button 
+                              onClick={() => navigateVideo('next')}
+                              disabled={currentVideoIndex === selectedVideos.length - 1}
+                            >
+                              Next <FaChevronRight />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </>
                   ) : (
                     <div className="no-video-selected">
                       <p>No video selected</p>
-                      <p>Click a video from the list to play</p>
+                      <p>Open the playlist below to select a video</p>
+                      <button 
+                        className="select-video-button"
+                        onClick={() => setIsPlaylistOpen(true)}
+                      >
+                        <FaVideo /> Browse videos
+                      </button>
+                      
+                      {isPlaylistOpen && (
+                        <div className="playlist-dropdown show" ref={emptyPlaylistRef} style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', width: '80%', maxWidth: '500px' }}>
+                          <div className="video-search">
+                            <input
+                              type="text"
+                              placeholder="Search videos..."
+                              value={videoSearchQuery}
+                              onChange={(e) => setVideoSearchQuery(e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                          <div className="video-dropdown-list">
+                            {moduleVideos
+                              .filter(video => 
+                                video.title.toLowerCase().includes(videoSearchQuery.toLowerCase())
+                              )
+                              .map(video => (
+                                <div 
+                                  key={video.id}
+                                  className="video-dropdown-item"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const videoObj: FileObject = {
+                                      id: video.id || '',
+                                      name: video.title,
+                                      url: video.url || '',
+                                      type: 'video'
+                                    };
+                                    
+                                    setSelectedVideos([videoObj]);
+                                    setCurrentVideoIndex(0);
+                                    setIsPlaylistOpen(false);
+                                  }}
+                                >
+                                  {video.title}
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

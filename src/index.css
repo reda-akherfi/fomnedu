@@ -2005,28 +2005,56 @@ button.secondary:hover {
 
 /* Video playlist on the left */
 .video-playlist {
-  width: 35%;
-  border-right: 1px solid #eee;
-  padding-right: 15px;
-  height: 100%;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  position: relative;
+  width: 100%;
+  border-right: none;
+  border-bottom: 1px solid #eee;
+  padding: 0;
+  margin-bottom: 10px;
 }
 
 .playlist-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
-  padding-bottom: 5px;
-  border-bottom: 1px solid #eee;
+  padding: 8px 12px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.playlist-header:hover {
+  background-color: #f5f5f5;
 }
 
 .playlist-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playlist-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 0 0 4px 4px;
+  max-height: 250px;
+  overflow-y: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: none;
+}
+
+.playlist-dropdown.show {
+  display: block;
 }
 
 /* Video player on the right */
@@ -3446,4 +3474,290 @@ body.alt-key-pressed .keyboard-shortcut {
   color: #007bff;
   font-weight: bold;
   opacity: 1;
+}
+
+/* Video section styles */
+.video-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.video-player-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+/* Video player with responsive aspect ratio */
+.video-player {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  height: 0;
+  background-color: #000;
+  margin-bottom: 0;
+}
+
+.video-player iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  max-height: none;
+}
+
+/* Video info bar with dropdown */
+.video-info-bar {
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+}
+
+/* Video dropdown styles */
+.video-dropdown-container {
+  position: relative;
+  margin-bottom: 10px;
+  z-index: 5;
+}
+
+.video-dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.video-dropdown-header:hover {
+  background-color: #f5f5f5;
+}
+
+.video-dropdown-header h4 {
+  margin: 0;
+  font-size: 14px;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.video-dropdown-toggle {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-dropdown-content {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 0 0 4px 4px;
+  max-height: 250px;
+  overflow-y: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.video-dropdown-list {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.video-dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s;
+}
+
+.video-dropdown-item:hover {
+  background-color: #f5f5f5;
+}
+
+.video-dropdown-item.active {
+  background-color: #e8f0fe;
+  border-left: 3px solid #3a7bd5;
+  font-weight: 500;
+}
+
+/* No video selected state */
+.no-video-selected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 20px;
+  text-align: center;
+  color: #666;
+}
+
+.select-video-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #3a7bd5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  margin-top: 15px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.select-video-button:hover {
+  background-color: #2d62ae;
+}
+
+/* Video navigation */
+.video-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.video-navigation button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.video-navigation button:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+.video-navigation button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.video-counter {
+  font-size: 14px;
+  color: #666;
+}
+
+/* Fullscreen video section enhancements */
+.section.fullscreen .video-player {
+  padding-bottom: 0;
+  height: calc(100% - 110px);
+  position: relative;
+}
+
+.section.fullscreen .video-info-bar {
+  height: auto;
+}
+
+/* Fix for section content video section */
+.section-content.videos-section {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Video search input in dropdown */
+.video-search {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.video-search input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+}
+
+.video-search input:focus {
+  border-color: #3a7bd5;
+  box-shadow: 0 0 0 2px rgba(58, 123, 213, 0.2);
+}
+
+/* Video search input in playlist dropdown */
+.video-search {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.video-search input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+}
+
+.video-search input:focus {
+  border-color: #3a7bd5;
+  box-shadow: 0 0 0 2px rgba(58, 123, 213, 0.2);
+}
+
+/* Video dropdown items in playlist */
+.video-dropdown-list {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.video-dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s;
+}
+
+.video-dropdown-item:hover {
+  background-color: #f5f5f5;
+}
+
+.video-dropdown-item.active {
+  background-color: #e8f0fe;
+  border-left: 3px solid #3a7bd5;
+  font-weight: 500;
+  padding-left: 9px;
+}
+
+/* ... existing code ... */
+
+/* Fix playlist height in fullscreen */
+.section.fullscreen .video-player {
+  padding-bottom: 0;
+  height: calc(100% - 110px);
+  position: relative;
+}
+
+.section.fullscreen .video-info-bar {
+  height: auto;
+  padding: 15px;
 }

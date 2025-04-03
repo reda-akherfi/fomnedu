@@ -48,7 +48,7 @@ html, body {
   border-radius: 0 !important;
   box-shadow: none !important;
   background-color: #fff !important;
-  overflow: auto !important;
+  overflow: hidden !important; /* Changed from auto to hidden */
 }
 
 /* Enhance section header in fullscreen */
@@ -72,7 +72,7 @@ html, body {
 .section.fullscreen .notes-section,
 .section.fullscreen .chatbot-section {
   display: flex !important;
-  flex-direction: row !important;
+  flex-direction: column !important;
   height: 100% !important;
 }
 
@@ -96,90 +96,152 @@ html, body {
 /* Video section specific fullscreen enhancements */
 .section.fullscreen .videos-section {
   display: flex !important;
-  flex-direction: row !important;
+  flex-direction: column !important;
   height: 100% !important;
   overflow: hidden !important;
-  background-color: #000 !important;
+  background-color: #fff !important;
+}
+
+/* Video container */
+.section.fullscreen .videos-section .video-container {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  width: 100% !important;
 }
 
 /* Video player container */
-.section.fullscreen .videos-section .video-player {
-  flex: 1 !important;
-  height: 100% !important;
+.section.fullscreen .videos-section .video-player-container {
   display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background-color: #000 !important;
-  position: relative !important;
-  min-width: 0 !important; /* Allow flex shrinking */
-  padding: 0 !important;
-  overflow: hidden !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  width: 100% !important;
 }
 
-/* Full height container for YouTube iframe */
-.section.fullscreen .videos-section .video-player::before {
-  content: "";
-  display: block;
-  padding-top: 30px; /* Add some top padding */
+/* Video player */
+.section.fullscreen .videos-section .video-player {
+  flex: 1 !important;
+  padding-bottom: 0 !important;
+  height: calc(100% - 120px) !important; /* Allow more space for navigation */
+  position: relative !important;
+  overflow: hidden !important;
+  background-color: #000 !important;
+  width: 100% !important;
+  margin: 0 !important;
+  max-height: none !important;
 }
 
 /* YouTube iframe */
 .section.fullscreen .videos-section .video-player iframe {
-  position: relative !important;
-  width: 85% !important; /* Fixed percentage width */
-  height: 85% !important; /* Fixed percentage height */
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
   border: none !important;
-  aspect-ratio: 16/9 !important; /* Enforce standard video aspect ratio */
-  margin: 0 auto !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important; /* Add subtle shadow for depth */
-  z-index: 2 !important;
+  max-height: none !important;
+  object-fit: contain !important;
+}
+
+/* Video info bar */
+.section.fullscreen .videos-section .video-info-bar {
+  padding: 15px 20px !important;
+  background-color: #f8f9fa !important;
+  border-top: 1px solid #e9ecef !important;
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+/* Video playlist in fullscreen */
+.section.fullscreen .videos-section .video-playlist {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 800px !important;
+  margin: 0 auto 15px !important;
+  z-index: 10 !important;
+  border-bottom: none !important;
+}
+
+.section.fullscreen .videos-section .playlist-header {
+  padding: 10px 15px !important;
+  background-color: #fff !important;
+  border: 1px solid #ddd !important;
+  border-radius: 4px !important;
+}
+
+.section.fullscreen .videos-section .playlist-dropdown {
+  max-height: 300px !important;
+  z-index: 100 !important;
+  background-color: #fff !important;
+  border: 1px solid #ddd !important;
+  border-radius: 0 0 4px 4px !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Video search in fullscreen */
+.section.fullscreen .videos-section .video-search {
+  padding: 12px !important;
+  border-bottom: 1px solid #e9ecef !important;
+}
+
+.section.fullscreen .videos-section .video-search input {
+  width: 100% !important;
+  padding: 10px 15px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 4px !important;
+  font-size: 14px !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+}
+
+/* Video dropdown items in fullscreen */
+.section.fullscreen .videos-section .video-dropdown-item {
+  padding: 10px 15px !important;
+  border-bottom: 1px solid #eee !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
+}
+
+.section.fullscreen .videos-section .video-dropdown-item:hover {
+  background-color: #f5f5f5 !important;
+}
+
+.section.fullscreen .videos-section .video-dropdown-item.active {
+  background-color: #e8f0fe !important;
+  border-left: 3px solid #3a7bd5 !important;
+  font-weight: 500 !important;
 }
 
 /* No video selected message */
 .section.fullscreen .videos-section .no-video-selected {
-  color: #fff !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #666 !important;
   font-size: 18px !important;
   text-align: center !important;
+  height: calc(100% - 50px) !important;
 }
 
-/* Playlist container */
-.section.fullscreen .videos-section .video-playlist {
-  width: 250px !important;
-  min-width: 250px !important;
-  max-width: 250px !important;
-  height: 100% !important;
-  overflow-y: auto !important;
-  border-left: 1px solid #e9ecef !important;
-  background-color: #f8f9fa !important;
-  padding: 0 !important;
+.section.fullscreen .videos-section .select-video-button {
+  padding: 10px 20px !important;
+  font-size: 16px !important;
 }
 
-/* Individual video item in playlist */
-.section.fullscreen .videos-section .video-item {
-  padding: 10px !important;
-  border-bottom: 1px solid #e9ecef !important;
-  cursor: pointer !important;
-  transition: background-color 0.2s ease !important;
-}
-
-.section.fullscreen .videos-section .video-item:hover {
-  background-color: #e9ecef !important;
-}
-
-.section.fullscreen .videos-section .video-item.active {
-  background-color: #e2e6ea !important;
-  border-left: 3px solid #007bff !important;
-}
-
-/* Video thumbnail */
-.section.fullscreen .videos-section .video-thumbnail {
-  margin-bottom: 8px !important;
-}
-
-.section.fullscreen .videos-section .video-thumbnail img {
+/* Video navigation in fullscreen */
+.section.fullscreen .videos-section .video-navigation {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 20px !important;
   width: 100% !important;
-  height: auto !important;
-  border-radius: 4px !important;
+  max-width: 600px !important;
+  margin: 10px auto 0 !important;
+}
+
+.section.fullscreen .videos-section .video-navigation button {
+  padding: 8px 16px !important;
+  font-size: 14px !important;
 }
 
 /* Notes section specific fullscreen enhancements */
