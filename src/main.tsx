@@ -11,6 +11,7 @@ import './react-icons-fix.css'
 import './auth-styles.css'
 import './logo-enhancement.css'
 import './sections-toolbar-center.css'
+import './fullscreen-fix.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -369,14 +369,6 @@ const TaskSession = () => {
     setNoteContent(content);
   };
   
-  // Toggle section visibility
-  const toggleSection = (section: SectionType) => {
-    setSectionVisibility(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-  
   // Toggle fullscreen mode for a section
   const toggleFullscreen = useCallback((section: SectionType) => {
     // If another section is already fullscreen, disable it
@@ -604,38 +596,8 @@ const TaskSession = () => {
         </div>
       </div>
       
-      {/* Toolbar for sections */}
-      <div className="sections-toolbar">
-        <div className="section-toggles">
-          <button 
-            className={`section-toggle ${sectionVisibility.documents ? 'active' : ''}`}
-            onClick={() => toggleSection('documents')}
-          >
-            {sectionVisibility.documents ? <FaEye /> : <FaEyeSlash />} Documents
-          </button>
-          <button 
-            className={`section-toggle ${sectionVisibility.videos ? 'active' : ''}`}
-            onClick={() => toggleSection('videos')}
-          >
-            {sectionVisibility.videos ? <FaEye /> : <FaEyeSlash />} Videos
-          </button>
-          <button 
-            className={`section-toggle ${sectionVisibility.notes ? 'active' : ''}`}
-            onClick={() => toggleSection('notes')}
-          >
-            {sectionVisibility.notes ? <FaEye /> : <FaEyeSlash />} Notes
-          </button>
-          <button 
-            className={`section-toggle ${sectionVisibility.chatbot ? 'active' : ''}`}
-            onClick={() => toggleSection('chatbot')}
-          >
-            {sectionVisibility.chatbot ? <FaEye /> : <FaEyeSlash />} AI Assistant
-          </button>
-        </div>
-      </div>
-      
       {/* Container for sections */}
-      <div className="sections-container">
+      <div className={`sections-container ${isAnyFullscreen ? 'has-fullscreen' : ''}`}>
         {/* Documents Section */}
         {sectionVisibility.documents && (
           <div className={`section ${sectionFullscreen.documents ? 'fullscreen' : ''}`}>
@@ -644,9 +606,6 @@ const TaskSession = () => {
               <div className="section-controls">
                 <button onClick={() => toggleFullscreen('documents')} title="Toggle fullscreen (Alt+1)">
                   {sectionFullscreen.documents ? <FaCompress /> : <FaExpand />}
-                </button>
-                <button onClick={() => toggleSection('documents')}>
-                  <FaTimes />
                 </button>
               </div>
             </div>
@@ -694,9 +653,6 @@ const TaskSession = () => {
               <div className="section-controls">
                 <button onClick={() => toggleFullscreen('videos')} title="Toggle fullscreen (Alt+2)">
                   {sectionFullscreen.videos ? <FaCompress /> : <FaExpand />}
-                </button>
-                <button onClick={() => toggleSection('videos')}>
-                  <FaTimes />
                 </button>
               </div>
             </div>
@@ -760,9 +716,6 @@ const TaskSession = () => {
                 <button onClick={() => toggleFullscreen('notes')} title="Toggle fullscreen (Alt+3)">
                   {sectionFullscreen.notes ? <FaCompress /> : <FaExpand />}
                 </button>
-                <button onClick={() => toggleSection('notes')}>
-                  <FaTimes />
-                </button>
               </div>
             </div>
             
@@ -811,9 +764,6 @@ const TaskSession = () => {
               <div className="section-controls">
                 <button onClick={() => toggleFullscreen('chatbot')} title="Toggle fullscreen (Alt+4)">
                   {sectionFullscreen.chatbot ? <FaCompress /> : <FaExpand />}
-                </button>
-                <button onClick={() => toggleSection('chatbot')}>
-                  <FaTimes />
                 </button>
               </div>
             </div>
