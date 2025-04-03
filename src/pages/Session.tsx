@@ -1,12 +1,17 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Rnd } from 'react-rnd';
-import { FaPlay, FaPause, FaStopwatch, FaExpand, FaCompress, FaEye, FaEyeSlash, FaTimes, FaCog, FaChevronLeft } from 'react-icons/fa';
+import { 
+  FaPlay, FaPause, FaStopwatch, FaExpand, FaCompress, 
+  FaEye, FaEyeSlash, FaTimes, FaCog, FaChevronLeft, 
+  FaChevronRight, FaPlus, FaVideo 
+} from 'react-icons/fa';
 import useModuleStore, { Module, DocFile, Video, Note } from '../stores/useModuleStore';
 import useAuthStore from '../stores/useAuthStore';
 import { documentService } from '../services/documentService';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import useModuleFiles from '../hooks/useModuleFiles';
 
 // Définir les types pour les sections
 type SectionType = 'documents' | 'videos' | 'notes' | 'chatbot';
@@ -22,11 +27,41 @@ interface SectionPosition {
 
 type SectionPositions = Record<SectionType, SectionPosition>;
 
+// Define types for file objects
+interface FileObject {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+  thumbnail?: string;
+}
+
+// Mock hook to satisfy TypeScript until real hook is created
+const useModuleFiles = (moduleId: string | undefined) => {
+  const [files, setFiles] = useState<FileObject[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    // Mock implementation - in reality, this would fetch files from an API
+    if (moduleId) {
+      // Simulate loading
+      setTimeout(() => {
+        setFiles([]);
+        setLoading(false);
+      }, 500);
+    }
+  }, [moduleId]);
+
+  return { files, loading, error };
+};
+
 const Session = () => {
   const { moduleId } = useParams<{ moduleId: string }>();
   const navigate = useNavigate();
   const { modules, documents, videos, notes, addNote, updateNote } = useModuleStore();
   const { token } = useAuthStore();
+  const { files, loading, error } = useModuleFiles(moduleId);
   
   // États pour le module et ses ressources
   const [module, setModule] = useState<Module | null>(null);
@@ -83,45 +118,51 @@ const Session = () => {
   // Add state for document blob URL
   const [documentBlobUrl, setDocumentBlobUrl] = useState<string | null>(null);
   
-  // Fonction pour formater l'URL YouTube
-  const formatYouTubeUrl = (url: string) => {
-    // Gérer différents formats d'URL YouTube
-    const videoId = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)?.[1];
-    // Retourner l'URL d'embed YouTube avec les paramètres de base
-    return videoId ? `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=1` : url;
-  };
+  // State for text content
+  const [textContent, setTextContent] = useState<string | null>(null);
+  const [isTextDocument, setIsTextDocument] = useState(false);
+  
+  // Added state for text content handling
+  const [selectedDocument, setSelectedDocument] = useState<FileObject | null>(null);
+  const [selectedVideos, setSelectedVideos] = useState<FileObject[]>([]);
+  const [videonote, setVideonote] = useState<string>('');
+  const [note, setNote] = useState<string>('');
+  
+  // Add state for video selection dropdown
+  const [showVideoSelector, setShowVideoSelector] = useState<boolean>(false);
+  const [availableVideos, setAvailableVideos] = useState<FileObject[]>([]);
   
   // Référence pour l'intervalle du minuteur
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // Function to load a document with proper authentication
-  const loadDocument = async (docUrl: string | undefined) => {
-    if (!docUrl || !token) return;
-    
-    if (docUrl.includes('/api/documents/')) {
-      const docId = docUrl.split('/').pop() || '';
-      try {
-        // Clean up previous blob URL if it exists
-        if (documentBlobUrl) {
-          URL.revokeObjectURL(documentBlobUrl);
-        }
-        
-        const blob = await documentService.downloadDocument(token, docId);
-        const newBlobUrl = URL.createObjectURL(blob);
-        setDocumentBlobUrl(newBlobUrl);
-        setCurrentDocumentUrl(null); // Clear the original URL since we're using blob now
-      } catch (error) {
-        console.error('Error loading document:', error);
-      }
-    } else {
-      // For external URLs, just set the URL directly
-      setCurrentDocumentUrl(docUrl);
+  // Fonction pour charger un document
+  const loadDocument = async (url: string) => {
+    try {
+      setIsLoadingDocument(true);
+      const response = await fetch(url);
+      const blob = await response.blob();
       
-      // Clean up previous blob URL if it exists
-      if (documentBlobUrl) {
-        URL.revokeObjectURL(documentBlobUrl);
-        setDocumentBlobUrl(null);
+      // Check if this is a text document (based on MIME type or extension)
+      const isText = 
+        blob.type === 'text/plain' || 
+        blob.type === 'application/octet-stream' || 
+        /\.(txt|md|js|ts|jsx|tsx|css|html|json)$/i.test(url);
+      
+      if (isText) {
+        // For text files, display the text content directly
+        setIsTextDocument(true);
+        const text = await blob.text();
+        setTextContent(text);
+      } else {
+        // For other documents, create a blob URL to display in iframe
+        setIsTextDocument(false);
+        const blobUrl = URL.createObjectURL(blob);
+        setDocumentBlobUrl(blobUrl);
       }
+    } catch (error) {
+      console.error('Error loading document:', error);
+    } finally {
+      setIsLoadingDocument(false);
     }
   };
   
@@ -309,12 +350,73 @@ const Session = () => {
     navigate('/module');
   };
 
+  // Modification des styles CSS pour les boutons
+  const buttonStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '16px',
+    width: '36px',
+    height: '36px',
+    borderRadius: '50%',
+    backgroundColor: '#f0f0f0',
+    border: 'none',
+    cursor: 'pointer',
+    margin: '0 5px',
+    transition: 'all 0.2s ease'
+  };
+
+  // Navigate to previous/next video
+  const navigateVideo = (direction: 'prev' | 'next'): void => {
+    if (selectedVideos.length === 0) return;
+    
+    if (direction === 'prev') {
+      setCurrentVideoIndex(prev => (prev > 0 ? prev - 1 : prev));
+    } else {
+      setCurrentVideoIndex(prev => (prev < selectedVideos.length - 1 ? prev + 1 : prev));
+    }
+  };
+
+  useEffect(() => {
+    if (files && !loading) {
+      // Filter available videos
+      const videos = files.filter((file: FileObject) => file.type === 'video');
+      setAvailableVideos(videos);
+    }
+  }, [files, loading]);
+  
+  const addVideoToPlaylist = (video: FileObject): void => {
+    if (!selectedVideos.some(v => v.id === video.id)) {
+      setSelectedVideos([...selectedVideos, video]);
+    }
+    setShowVideoSelector(false);
+  };
+  
+  const removeVideoFromPlaylist = (videoId: string): void => {
+    const newVideos = selectedVideos.filter(v => v.id !== videoId);
+    setSelectedVideos(newVideos);
+    
+    // Adjust current index if needed
+    if (currentVideoIndex >= newVideos.length) {
+      setCurrentVideoIndex(Math.max(0, newVideos.length - 1));
+    }
+  };
+
+  // Fonction pour formater l'URL YouTube
+  const formatYouTubeUrl = (url: string) => {
+    // Gérer différents formats d'URL YouTube
+    const videoId = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)?.[1];
+    // Retourner l'URL d'embed YouTube sans autoplay
+    return videoId ? `https://www.youtube.com/embed/${videoId}?rel=0` : url;
+  };
+
   return (
     <div className="session-container">
       {/* Barre supérieure avec minuteur et contrôles */}
       <div className="session-header">
         <button className="back-button" onClick={exitSession}>
-          <FaChevronLeft /> Retour
+          <FaChevronLeft />
+          Retour aux modules
         </button>
         
         <div className="module-title">
@@ -328,13 +430,13 @@ const Session = () => {
           </div>
           
           <div className="timer-controls">
-            <button onClick={toggleTimer}>
+            <button style={buttonStyle} onClick={toggleTimer} title={isTimerRunning ? "Pause" : "Play"}>
               {isTimerRunning ? <FaPause /> : <FaPlay />}
             </button>
-            <button onClick={resetTimer}>
+            <button style={buttonStyle} onClick={resetTimer} title="Reset">
               <FaStopwatch />
             </button>
-            <button onClick={() => setIsTimerSettingsOpen(!isTimerSettingsOpen)}>
+            <button style={buttonStyle} onClick={() => setIsTimerSettingsOpen(!isTimerSettingsOpen)} title="Settings">
               <FaCog />
             </button>
           </div>
@@ -489,33 +591,42 @@ const Session = () => {
             </div>
             
             <div className="section-content documents-section">
-              <div className="documents-list">
-                {moduleDocuments.length === 0 ? (
-                  <div className="empty-message">Aucun document disponible</div>
-                ) : (
-                  moduleDocuments.map(doc => (
-                    <div 
-                      key={doc.id} 
-                      className={`document-item ${doc.url && (doc.url === currentDocumentUrl || documentBlobUrl !== null) ? 'active' : ''}`}
-                      onClick={() => selectDocument(doc)}
-                    >
-                      <div className="document-icon">{/* Icône selon le type */}</div>
-                      <div className="document-name">{doc.name}</div>
-                    </div>
-                  ))
-                )}
+              <div className="document-selector">
+                <select
+                  value={selectedDocument ? selectedDocument.id : ''}
+                  onChange={(e) => {
+                    const docId = e.target.value;
+                    const doc = files.find(file => file.id === docId);
+                    if (doc) {
+                      setSelectedDocument(doc);
+                      loadDocument(doc.url);
+                    }
+                  }}
+                >
+                  <option value="">Select a document</option>
+                  {files && files.filter(file => file.type === 'document').map(file => (
+                    <option key={file.id} value={file.id}>{file.name}</option>
+                  ))}
+                </select>
               </div>
               
               <div className="document-preview">
-                {(currentDocumentUrl || documentBlobUrl) ? (
-                  <iframe 
-                    src={documentBlobUrl || currentDocumentUrl || ''} 
-                    title="Document Preview" 
-                    className="document-iframe"
-                  />
+                {selectedDocument ? (
+                  isTextDocument ? (
+                    <div className="text-document-content">
+                      {textContent}
+                    </div>
+                  ) : (
+                    <iframe
+                      src={selectedDocument.url}
+                      title={selectedDocument.name}
+                      width="100%"
+                      height="100%"
+                    ></iframe>
+                  )
                 ) : (
-                  <div className="no-document-selected">
-                    Sélectionnez un document pour l'afficher
+                  <div className="no-document">
+                    <p>No document selected</p>
                   </div>
                 )}
               </div>
@@ -550,8 +661,11 @@ const Session = () => {
             }}
           >
             <div className="section-header">
-              <h2>Vidéos</h2>
+              <h2>Videos</h2>
               <div className="section-controls">
+                <button onClick={() => setShowVideoSelector(!showVideoSelector)}>
+                  <FontAwesomeIcon icon={FaPlus} />
+                </button>
                 <button onClick={() => toggleFullscreen('videos')}>
                   {sectionFullscreen.videos ? <FaCompress /> : <FaExpand />}
                 </button>
@@ -561,52 +675,123 @@ const Session = () => {
               </div>
             </div>
             
+            {showVideoSelector && (
+              <div className="video-selector-dropdown">
+                <div className="video-selector-header">
+                  <h3>Select a video to add</h3>
+                  <button onClick={() => setShowVideoSelector(false)}>
+                    <FaTimes />
+                  </button>
+                </div>
+                <div className="video-selector-list">
+                  {availableVideos.length > 0 ? (
+                    availableVideos.map(video => (
+                      <div 
+                        key={video.id} 
+                        className="video-selector-item"
+                        onClick={() => addVideoToPlaylist(video)}
+                      >
+                        <div className="video-thumbnail">
+                          {video.thumbnail ? (
+                            <img src={video.thumbnail} alt={video.name} />
+                          ) : (
+                            <div className="video-placeholder">
+                              <FontAwesomeIcon icon={FaVideo} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="video-info">
+                          <div className="video-title">{video.name}</div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No videos available</p>
+                  )}
+                </div>
+              </div>
+            )}
+            
             <div className="section-content videos-section">
-              <div className="video-player">
-                {currentVideoUrl ? (
-                  <iframe
-                    src={formatYouTubeUrl(currentVideoUrl)}
-                    title="YouTube Video Player"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
+              <div className="video-player-container">
+                {selectedVideos.length > 0 && currentVideoIndex < selectedVideos.length ? (
+                  <>
+                    <div className="video-player">
+                      <iframe
+                        src={formatYouTubeUrl(selectedVideos[currentVideoIndex].url)}
+                        title={selectedVideos[currentVideoIndex].name}
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
+                    </div>
+                    
+                    <div className="video-navigation">
+                      <button 
+                        onClick={() => navigateVideo('prev')}
+                        disabled={currentVideoIndex === 0}
+                      >
+                        <FaChevronLeft />
+                      </button>
+                      <span className="video-counter">
+                        {currentVideoIndex + 1} / {selectedVideos.length}
+                      </span>
+                      <button 
+                        onClick={() => navigateVideo('next')}
+                        disabled={currentVideoIndex === selectedVideos.length - 1}
+                      >
+                        <FaChevronRight />
+                      </button>
+                    </div>
+                  </>
                 ) : (
-                  <div className="no-video-selected">
-                    Sélectionnez une vidéo pour la lire
+                  <div className="no-video">
+                    <p>No videos selected</p>
+                    <button onClick={() => setShowVideoSelector(true)}>
+                      <FaPlus /> Add Videos
+                    </button>
                   </div>
                 )}
               </div>
               
-              <div className="video-playlist">
-                {moduleVideos.length === 0 ? (
-                  <div className="empty-message">Aucune vidéo disponible</div>
-                ) : (
-                  moduleVideos.map(video => (
-                    <div 
-                      key={video.id} 
-                      className={`video-item ${video.url === currentVideoUrl ? 'active' : ''}`}
-                      onClick={() => {
-                        const newIndex = moduleVideos.findIndex(v => v.id === video.id);
-                        if (newIndex !== currentVideoIndex) {
-                          setCurrentVideoIndex(newIndex);
-                          setCurrentVideoUrl(video.url);
-                        }
-                      }}
-                    >
-                      <div className="video-thumbnail">
-                        <img 
-                          src={video.thumbnailUrl || 'https://via.placeholder.com/120x68'} 
-                          alt={video.title} 
-                        />
+              {selectedVideos.length > 0 && (
+                <div className="video-playlist">
+                  <h3>Playlist</h3>
+                  <div className="video-list">
+                    {selectedVideos.map((video, index) => (
+                      <div 
+                        key={video.id} 
+                        className={`video-item ${index === currentVideoIndex ? 'active' : ''}`}
+                        onClick={() => setCurrentVideoIndex(index)}
+                      >
+                        <div className="video-thumbnail">
+                          {video.thumbnail ? (
+                            <img src={video.thumbnail} alt={video.name} />
+                          ) : (
+                            <div className="video-placeholder">
+                              <FontAwesomeIcon icon={FaVideo} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="video-info">
+                          <div className="video-title">{video.name}</div>
+                        </div>
+                        <button 
+                          className="remove-video"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeVideoFromPlaylist(video.id);
+                          }}
+                        >
+                          <FaTimes />
+                        </button>
                       </div>
-                      <div className="video-info">
-                        <div className="video-title">{video.title}</div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </Rnd>
         )}
