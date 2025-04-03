@@ -8,6 +8,7 @@ import './pomodoro-timer.css'
 import './timer-fix.css'
 import './section-controls-fix.css'
 import './react-icons-fix.css'
+import './auth-styles.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
