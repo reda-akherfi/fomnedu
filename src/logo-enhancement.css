@@ -1,0 +1,68 @@
+/* Enhanced Logo Styles */
+
+/* Maximize logo size while maintaining header layout */
+.logo-image {
+  height: 55px !important; /* Maximized from 35px */
+  width: auto !important;
+  object-fit: contain !important;
+  transition: transform 0.2s ease !important;
+  margin-right: 8px !important; /* Increased margin for better spacing */
+  max-height: 55px !important; /* Ensure consistent maximum height */
+  vertical-align: middle !important; /* Better vertical alignment */
+}
+
+/* Adjust header logo container for maximized logo */
+.header-logo {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important; /* Optimized spacing */
+  margin-left: 10px !important;
+  height: 100% !important;
+  flex-shrink: 0 !important; /* Prevent logo container from shrinking */
+  padding: 5px 0 !important; /* Add vertical padding */
+}
+
+/* Ensure app header has enough height for the maximized logo */
+.app-header {
+  min-height: 80px !important; /* Increased to accommodate maximized logo */
+  padding: 0 20px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Adjust main content padding to compensate for taller header */
+.main-content {
+  padding-top: 80px !important; /* Match the header height */
+}
+
+/* Enhance app title to work well with larger logo */
+.app-title {
+  font-size: 24px !important; /* Larger font to balance with larger logo */
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  letter-spacing: 0.5px !important; /* Improved readability */
+  margin-left: 2px !important; /* Fine-tuned spacing */
+}
+
+/* Left section adjustments */
+.left-section {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important; /* Increased spacing */
+  height: 100% !important;
+  flex-shrink: 0 !important; /* Prevent from shrinking */
+}
+
+/* User section adjustments to maintain balance */
+.user-section {
+  margin-left: auto !important; /* Push to the right */
+  display: flex !important;
+  align-items: center !important;
+  gap: 15px !important;
+  height: 100% !important;
+}
+
+/* Hover effect for the logo */
+.logo-image:hover {
+  transform: scale(1.05) !important;
+} 

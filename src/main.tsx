@@ -9,6 +9,7 @@ import './timer-fix.css'
 import './section-controls-fix.css'
 import './react-icons-fix.css'
 import './auth-styles.css'
+import './logo-enhancement.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
