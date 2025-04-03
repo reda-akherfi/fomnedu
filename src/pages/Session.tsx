@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Rnd } from 'react-rnd';
 import { 
-  FaPlay, FaPause, FaStopwatch, FaExpand, FaCompress, 
+  FaPlay, FaPause, FaForward, FaStopwatch, FaExpand, FaCompress, 
   FaEye, FaEyeSlash, FaTimes, FaCog, FaChevronLeft, 
-  FaChevronRight, FaPlus, FaVideo 
+  FaChevronRight, FaPlus, FaVideo, FaCoffee, FaClock, FaSpinner, FaStepForward 
 } from 'react-icons/fa';
 import useModuleStore, { Module, DocFile, Video, Note } from '../stores/useModuleStore';
 import useAuthStore from '../stores/useAuthStore';
+import useTimerStore from '../stores/useTimerStore';
+import { Timer, TimerType, TimerStatus } from '../services/timerService';
 import { documentService } from '../services/documentService';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -34,6 +36,11 @@ const Session = () => {
   const { token } = useAuthStore();
   const { files, loading, error } = useModuleFiles(moduleId);
   
+  const { 
+    createTimer, pauseTimer, resumeTimer, stopTimer, 
+    fetchActiveTimers, activeTimer, setActiveTimer 
+  } = useTimerStore();
+  
   // États pour le module et ses ressources
   const [module, setModule] = useState<Module | null>(null);
   const [moduleDocuments, setModuleDocuments] = useState<DocFile[]>([]);
@@ -41,13 +48,13 @@ const Session = () => {
   const [_moduleNotes, setModuleNotes] = useState<Note[]>([]);
   
   // État pour le minuteur
-  const [timerMode, setTimerMode] = useState<'pomodoro' | 'custom'>('pomodoro');
-  const [workDuration, setWorkDuration] = useState(25 * 60); // 25 minutes en secondes
-  const [breakDuration, setBreakDuration] = useState(5 * 60); // 5 minutes en secondes
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [timerPhase, setTimerPhase] = useState<'work' | 'break'>('work');
+  const [workDuration, setWorkDuration] = useState(25 * 60); // 25 minutes in seconds
+  const [breakDuration, setBreakDuration] = useState(5 * 60); // 5 minutes in seconds
   const [remainingTime, setRemainingTime] = useState(workDuration);
+  const [elapsedTime, setElapsedTime] = useState(0);
   const [isTimerSettingsOpen, setIsTimerSettingsOpen] = useState(false);
+  const [isCreatingTimer, setIsCreatingTimer] = useState(false);
+  const [timerError, setTimerError] = useState<string | null>(null);
   
   // États pour les sections
   const [sectionVisibility, setSectionVisibility] = useState<SectionVisibility>({
@@ -107,10 +114,199 @@ const Session = () => {
   const [videoSearchQuery, setVideoSearchQuery] = useState<string>('');
   
   // Référence pour l'intervalle du minuteur
-  const timerInterval = useRef<NodeJS.Timeout | null>(null);
-  
+  const localTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerStartTimeRef = useRef<number | null>(null);
+
   // Add isLoadingDocument state
   const [isLoadingDocument, setIsLoadingDocument] = useState<boolean>(false);
+
+  // Handle timer completion and transition to next timer
+  const handleTimerCompletion = useCallback(async () => {
+    if (!activeTimer || !activeTimer.id || !token || !moduleId) return;
+    
+    try {
+      // Calculate actual elapsed time
+      const currentElapsedTime = Math.max(
+        (activeTimer.durationSeconds || 0) - remainingTime, 
+        0
+      );
+      
+      // First stop the current timer - this marks it as completed in the API
+      await stopTimer(activeTimer.id);
+      
+      // Create the next timer with opposite break state
+      const isBreak = !activeTimer.isBreak;
+      
+      // Create a new timer following the API contract
+      const newTimer: Omit<Timer, 'id' | 'createdAt' | 'status'> = {
+        timerType: TimerType.POMODORO,
+        title: module?.name ? 
+          `${isBreak ? 'Break' : 'Work'} Timer for ${module.name}` : 
+          `${isBreak ? 'Break' : 'Work'} Session`,
+        durationSeconds: isBreak ? breakDuration : workDuration,
+        isBreak: isBreak
+      };
+      
+      // Play notification sound
+      const audio = new Audio('/notification.mp3');
+      audio.play().catch(e => console.log('Audio error:', e));
+      
+      // Create the next timer after ensuring the previous one is stopped
+      const newTimerResponse = await createTimer(newTimer);
+      
+      // Reset elapsed time for new timer
+      setElapsedTime(0);
+      timerStartTimeRef.current = Date.now();
+      
+      // Force update UI immediately
+      if (newTimerResponse) {
+        setActiveTimer(newTimerResponse);
+        setRemainingTime(newTimerResponse.durationSeconds || (isBreak ? breakDuration : workDuration));
+      }
+    } catch (error) {
+      setTimerError(error instanceof Error ? error.message : 'Error transitioning to next timer');
+      console.error('Timer transition error:', error);
+    }
+  }, [activeTimer, moduleId, token, module, workDuration, breakDuration, createTimer, stopTimer, setActiveTimer, remainingTime]);
+
+  // Skip to next timer
+  const skipToNextTimer = async () => {
+    if (!activeTimer || !activeTimer.id || !moduleId || !token) return;
+    
+    try {
+      setTimerError(null);
+      
+      // Save the current elapsed time
+      const currentElapsedTime = Math.max(
+        (activeTimer.durationSeconds || 0) - remainingTime, 
+        0
+      );
+      
+      // Stop the current timer - marks it as completed in the API
+      await stopTimer(activeTimer.id);
+      
+      // Create a new timer with opposite break state
+      const isBreak = !activeTimer.isBreak;
+      
+      // Create a new timer following the API contract
+      const newTimer: Omit<Timer, 'id' | 'createdAt' | 'status'> = {
+        timerType: TimerType.POMODORO,
+        title: module?.name ? 
+          `${isBreak ? 'Break' : 'Work'} Timer for ${module.name}` : 
+          `${isBreak ? 'Break' : 'Work'} Session`,
+        durationSeconds: isBreak ? breakDuration : workDuration,
+        isBreak: isBreak
+      };
+      
+      // Create the new timer after ensuring the previous one is stopped
+      const newTimerResponse = await createTimer(newTimer);
+      
+      // Reset elapsed time for new timer
+      setElapsedTime(0);
+      timerStartTimeRef.current = Date.now();
+      
+      // Force update UI immediately
+      if (newTimerResponse) {
+        setActiveTimer(newTimerResponse);
+        setRemainingTime(newTimerResponse.durationSeconds || (isBreak ? breakDuration : workDuration));
+      }
+    } catch (error) {
+      setTimerError(error instanceof Error ? error.message : 'Error skipping timer');
+      console.error('Timer skip error:', error);
+    }
+  };
+
+  // Load active timer on component mount
+  useEffect(() => {
+    const loadActiveTimer = async () => {
+      try {
+        const activeTimers = await fetchActiveTimers();
+        if (activeTimers.length > 0) {
+          // Use the most recent active timer
+          const mostRecentTimer = activeTimers.sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA;
+          })[0];
+          
+          setActiveTimer(mostRecentTimer);
+          
+          // Set remaining time based on the active timer
+          if (mostRecentTimer.remainingSeconds !== undefined) {
+            setRemainingTime(mostRecentTimer.remainingSeconds);
+          } else if (mostRecentTimer.durationSeconds) {
+            setRemainingTime(mostRecentTimer.durationSeconds);
+          } else {
+            setRemainingTime(mostRecentTimer.isBreak ? breakDuration : workDuration);
+          }
+          
+          // Start tracking elapsed time
+          timerStartTimeRef.current = Date.now();
+        }
+      } catch (error) {
+        console.error('Error fetching active timers:', error);
+      }
+    };
+    
+    if (token) {
+      loadActiveTimer();
+    }
+    
+    return () => {
+      if (localTimerRef.current) {
+        clearInterval(localTimerRef.current);
+        localTimerRef.current = null;
+      }
+    };
+  }, [fetchActiveTimers, setActiveTimer, token, workDuration, breakDuration]);
+
+  // Update UI based on active timer
+  useEffect(() => {
+    if (activeTimer) {
+      // Update remaining time
+      if (activeTimer.remainingSeconds !== undefined) {
+        setRemainingTime(activeTimer.remainingSeconds);
+      }
+      
+      // Update local timer if running
+      if (activeTimer.status === TimerStatus.RUNNING && !localTimerRef.current) {
+        // Set timer start time if not already set
+        if (timerStartTimeRef.current === null) {
+          timerStartTimeRef.current = Date.now();
+        }
+        
+        localTimerRef.current = setInterval(() => {
+          // Update remaining time
+          setRemainingTime(prev => {
+            if (prev <= 1) {
+              // When timer reaches 0, automatically transition to next timer
+              clearInterval(localTimerRef.current!);
+              localTimerRef.current = null;
+              handleTimerCompletion();
+              return 0;
+            }
+            return prev - 1;
+          });
+          
+          // Update elapsed time
+          if (timerStartTimeRef.current) {
+            const elapsedMs = Date.now() - timerStartTimeRef.current;
+            setElapsedTime(Math.floor(elapsedMs / 1000));
+          }
+        }, 1000);
+      } else if (activeTimer.status !== TimerStatus.RUNNING && localTimerRef.current) {
+        clearInterval(localTimerRef.current);
+        localTimerRef.current = null;
+      }
+    }
+    
+    return () => {
+      if (localTimerRef.current) {
+        clearInterval(localTimerRef.current);
+        localTimerRef.current = null;
+      }
+    };
+  }, [activeTimer, handleTimerCompletion]);
 
   // Fonction pour charger un document
   const loadDocument = async (url: string) => {
@@ -222,75 +418,70 @@ const Session = () => {
     
     // Nettoyer le timer à la désinscription
     return () => {
-      if (timerInterval.current) {
-        clearInterval(timerInterval.current);
+      if (localTimerRef.current) {
+        clearInterval(localTimerRef.current);
+        localTimerRef.current = null;
       }
     };
   }, [moduleId, modules, documents, videos, notes, navigate, addNote, token]);
   
-  // Logique du minuteur
-  useEffect(() => {
-    if (isTimerRunning) {
-      timerInterval.current = setInterval(() => {
-        setRemainingTime(prev => {
-          if (prev <= 1) {
-            // Changer de phase (travail <-> pause)
-            const newPhase = timerPhase === 'work' ? 'break' : 'work';
-            setTimerPhase(newPhase);
-            // Jouer un son de notification
-            const audio = new Audio('/notification.mp3');
-            audio.play().catch(e => console.log('Erreur audio:', e));
-            // Définir la nouvelle durée
-            return newPhase === 'work' ? workDuration : breakDuration;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else if (timerInterval.current) {
-      clearInterval(timerInterval.current);
-    }
-    
-    return () => {
-      if (timerInterval.current) {
-        clearInterval(timerInterval.current);
-      }
-    };
-  }, [isTimerRunning, timerPhase, workDuration, breakDuration]);
-  
-  // Formater le temps restant
+  // Format time (seconds to MM:SS)
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
   
-  // Démarrer/Arrêter le minuteur
-  const toggleTimer = () => {
-    setIsTimerRunning(!isTimerRunning);
-  };
-  
-  // Réinitialiser le minuteur
-  const resetTimer = () => {
-    setIsTimerRunning(false);
-    setTimerPhase('work');
-    setRemainingTime(workDuration);
-  };
-  
-  // Sauvegarder le contenu de la note
-  const saveNoteContent = () => {
-    if (currentNoteId) {
-      updateNote(currentNoteId, noteTitle, noteContent);
+  // Toggle timer (start/pause/resume)
+  const toggleTimer = async () => {
+    if (!moduleId || !token) return;
+    
+    try {
+      setTimerError(null);
+      
+      if (!activeTimer) {
+        // Create a new timer
+        setIsCreatingTimer(true);
+        
+        const newTimer: Omit<Timer, 'id' | 'createdAt' | 'status'> = {
+          timerType: TimerType.POMODORO,
+          title: module?.name ? `Work Timer for ${module.name}` : 'Work Session',
+          durationSeconds: workDuration,
+          isBreak: false
+        };
+        
+        const createdTimer = await createTimer(newTimer);
+        
+        // Start tracking elapsed time
+        timerStartTimeRef.current = Date.now();
+        setElapsedTime(0);
+        
+      } else if (activeTimer.status === TimerStatus.RUNNING) {
+        // Pause the timer
+        await pauseTimer(activeTimer.id!);
+      } else if (activeTimer.status === TimerStatus.PAUSED) {
+        // Resume the timer - update start time to account for pause
+        if (timerStartTimeRef.current) {
+          const pausedTime = Date.now() - timerStartTimeRef.current - (elapsedTime * 1000);
+          timerStartTimeRef.current = Date.now() - pausedTime;
+        } else {
+          timerStartTimeRef.current = Date.now() - (elapsedTime * 1000);
+        }
+        
+        await resumeTimer(activeTimer.id!);
+      }
+    } catch (error) {
+      setTimerError(error instanceof Error ? error.message : 'Error managing timer');
+      console.error('Timer error:', error);
+    } finally {
+      setIsCreatingTimer(false);
     }
   };
   
-  // Autosave toutes les 5 secondes
-  useEffect(() => {
-    const saveInterval = setInterval(() => {
-      saveNoteContent();
-    }, 5000);
-    
-    return () => clearInterval(saveInterval);
-  }, [noteContent, noteTitle, currentNoteId]);
+  // Get timer icon based on type
+  const getTimerIcon = () => {
+    return activeTimer?.isBreak ? <FaCoffee /> : <FaClock />;
+  };
   
   // Gérer le changement de note
   const handleNoteChange = (content: string) => {
@@ -407,6 +598,22 @@ const Session = () => {
         video.name.toLowerCase().includes(videoSearchQuery.toLowerCase())
       );
 
+  // Sauvegarder le contenu de la note
+  const saveNoteContent = () => {
+    if (currentNoteId) {
+      updateNote(currentNoteId, noteTitle, noteContent);
+    }
+  };
+  
+  // Autosave toutes les 5 secondes
+  useEffect(() => {
+    const saveInterval = setInterval(() => {
+      saveNoteContent();
+    }, 5000);
+    
+    return () => clearInterval(saveInterval);
+  }, [noteContent, noteTitle, currentNoteId]);
+
   return (
     <div className="session-container">
       {/* Barre supérieure avec minuteur et contrôles */}
@@ -421,57 +628,53 @@ const Session = () => {
         </div>
         
         <div className="timer-container">
-          <div className={`timer ${timerPhase === 'break' ? 'timer-break' : ''}`}>
-            <span className="timer-phase">{timerPhase === 'work' ? 'Travail' : 'Pause'}</span>
-            <span className="timer-display">{formatTime(remainingTime)}</span>
+          {/* Timer Display */}
+          <div className={`timer-display ${activeTimer?.isBreak ? 'timer-break' : 'timer-work'}`}>
+            <div className="timer-type-label">
+              {activeTimer?.isBreak ? 'BREAK' : 'WORK'}
+            </div>
+            <div className="timer-time">
+              {formatTime(remainingTime)}
+            </div>
           </div>
           
+          {/* Timer Controls */}
           <div className="timer-controls">
-            <button style={buttonStyle} onClick={toggleTimer} title={isTimerRunning ? "Pause" : "Play"}>
-              {isTimerRunning ? <FaPause /> : <FaPlay />}
+            <button 
+              onClick={toggleTimer} 
+              disabled={isCreatingTimer}
+            >
+              {isCreatingTimer ? (
+                <FaSpinner className="loading-spinner" />
+              ) : activeTimer?.status === TimerStatus.RUNNING ? (
+                <FaPause />
+              ) : (
+                <FaPlay />
+              )}
+              <span>{activeTimer?.status === TimerStatus.RUNNING ? 'Pause' : 'Start'}</span>
             </button>
-            <button style={buttonStyle} onClick={resetTimer} title="Reset">
-              <FaStopwatch />
+            
+            <button onClick={skipToNextTimer} disabled={!activeTimer || isCreatingTimer}>
+              <FaStepForward />
+              <span>Skip</span>
             </button>
-            <button style={buttonStyle} onClick={() => setIsTimerSettingsOpen(!isTimerSettingsOpen)} title="Settings">
+            
+            <button onClick={() => setIsTimerSettingsOpen(!isTimerSettingsOpen)}>
               <FaCog />
+              <span>Settings</span>
             </button>
           </div>
           
+          {/* Timer Settings Dialog */}
           {isTimerSettingsOpen && (
-            <div className="timer-settings">
-              <h3>Paramètres du minuteur</h3>
-              <div className="timer-settings-options">
-                <div className="timer-mode-selector">
-                  <label>
-                    <input
-                      type="radio"
-                      name="timerMode"
-                      checked={timerMode === 'pomodoro'}
-                      onChange={() => {
-                        setTimerMode('pomodoro');
-                        setWorkDuration(25 * 60);
-                        setBreakDuration(5 * 60);
-                        resetTimer();
-                      }}
-                    />
-                    Pomodoro (25/5)
-                  </label>
-                  <label>
-                    <input
-                      type="radio"
-                      name="timerMode"
-                      checked={timerMode === 'custom'}
-                      onChange={() => setTimerMode('custom')}
-                    />
-                    Personnalisé
-                  </label>
-                </div>
+            <div className="timer-settings-overlay">
+              <div className="timer-settings">
+                <h3>Pomodoro Timer Settings</h3>
                 
-                {timerMode === 'custom' && (
-                  <div className="custom-timer-inputs">
-                    <div>
-                      <label>Durée de travail (min)</label>
+                <div className="timer-settings-options">
+                  <div className="timer-duration-inputs">
+                    <div className="duration-field">
+                      <label>Work Duration (minutes)</label>
                       <input
                         type="number"
                         min="1"
@@ -479,15 +682,13 @@ const Session = () => {
                         value={Math.floor(workDuration / 60)}
                         onChange={(e) => {
                           const newDuration = parseInt(e.target.value) * 60;
-                          setWorkDuration(newDuration);
-                          if (timerPhase === 'work') {
-                            setRemainingTime(newDuration);
-                          }
+                          setWorkDuration(isNaN(newDuration) ? 25 * 60 : newDuration);
                         }}
                       />
                     </div>
-                    <div>
-                      <label>Durée de pause (min)</label>
+                    
+                    <div className="duration-field">
+                      <label>Break Duration (minutes)</label>
                       <input
                         type="number"
                         min="1"
@@ -495,17 +696,19 @@ const Session = () => {
                         value={Math.floor(breakDuration / 60)}
                         onChange={(e) => {
                           const newDuration = parseInt(e.target.value) * 60;
-                          setBreakDuration(newDuration);
-                          if (timerPhase === 'break') {
-                            setRemainingTime(newDuration);
-                          }
+                          setBreakDuration(isNaN(newDuration) ? 5 * 60 : newDuration);
                         }}
                       />
                     </div>
                   </div>
-                )}
+                </div>
+                
+                {timerError && <div className="timer-error">{timerError}</div>}
+                
+                <div className="timer-settings-actions">
+                  <button onClick={() => setIsTimerSettingsOpen(false)}>Save & Close</button>
+                </div>
               </div>
-              <button onClick={() => setIsTimerSettingsOpen(false)}>Fermer</button>
             </div>
           )}
         </div>

@@ -1,0 +1,159 @@
+/* Pomodoro Timer Button Styles */
+.timer-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.timer-controls button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 15px;
+  border-radius: 8px;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: auto;
+  height: auto;
+}
+
+.timer-controls button:hover {
+  background-color: #e9e9e9;
+}
+
+.timer-controls button svg {
+  width: 24px !important;
+  height: 24px !important;
+  margin-bottom: 5px;
+  color: #333 !important;
+  fill: #333 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.timer-controls button span {
+  font-size: 12px;
+  font-weight: 500;
+  color: #333;
+}
+
+.timer-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.timer-type-label {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.timer-time {
+  font-size: 36px;
+  font-weight: bold;
+  color: #333;
+}
+
+.timer-break .timer-type-label {
+  color: #4CAF50;
+}
+
+.timer-work .timer-type-label {
+  color: #2196F3;
+}
+
+/* Timer Settings Dialog */
+.timer-settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.timer-settings {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.timer-settings h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 18px;
+  text-align: center;
+}
+
+.timer-settings-options {
+  margin-bottom: 20px;
+}
+
+.timer-duration-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.duration-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.duration-field label {
+  font-size: 14px;
+  color: #555;
+}
+
+.duration-field input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.timer-settings-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.timer-settings-actions button {
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.timer-settings-actions button:hover {
+  background-color: #45a049;
+}
+
+.timer-error {
+  color: #f44336;
+  font-size: 14px;
+  margin-bottom: 15px;
+  text-align: center;
+} 
